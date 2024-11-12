@@ -1,0 +1,23 @@
+{
+    "name": "rianwlp/dev-master",
+    "type": "project",
+    "authors": [
+        {
+            "name": "rianwlp",
+            "email": "rianwlp@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Libs\\": "libs/",
+            "Db\\": "db/"
+        },
+        "files": [
+            "app/routes/helpers/helpersRoutes.php"
+        ]
+    },
+    "require": {
+        "firebase/php-jwt": "^6.10",
+        "rianwlp/libs": "dev-master"
+    }
+}
