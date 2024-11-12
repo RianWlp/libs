@@ -1,6 +1,6 @@
 <?php
 
-namespace RianWlp\Db\core;
+namespace RianWlp\Db;
 class DbConnect
 {
     // Desenvolver classes para mexer com o commit e transacoes

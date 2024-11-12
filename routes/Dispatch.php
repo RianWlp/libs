@@ -4,7 +4,7 @@ namespace RianWlp\Libs\routes;
 
 use RianWlp\Libs\log\Log;
 use RianWlp\Libs\utils\Token;
-use RianWlp\Db\core\DbConnect;
+use RianWlp\Db\DbConnect;
 
 class Dispatch
 {
