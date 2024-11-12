@@ -14,7 +14,7 @@
             "Db\\": "db/"
         },
         "files": [
-            "libs/routes/helpers/helpersRoutes.php"
+            "routes/helpers/helpersRoutes.php"
         ]
     },
     "require": {
