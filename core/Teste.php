@@ -1,6 +1,6 @@
 <?php
 
-namespace Libs\core;
+namespace RianWlp\libs\core;
 class Teste {
 
     public function __construct()
