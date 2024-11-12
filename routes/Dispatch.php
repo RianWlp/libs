@@ -1,10 +1,10 @@
 <?php
 
-namespace Libs\routes;
+namespace RianWlp\Libs\routes;
 
-use Libs\log\Log;
-use Libs\utils\Token;
-// use Db\DbConnect;
+use RianWlp\Libs\log\Log;
+use RianWlp\Libs\utils\Token;
+use RianWlp\Db\core\DbConnect;
 
 class Dispatch
 {

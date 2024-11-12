@@ -1,6 +1,6 @@
 <?php
 
-namespace Libs\utils;
+namespace RianWlp\Libs\utils;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;

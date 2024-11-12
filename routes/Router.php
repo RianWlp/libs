@@ -1,9 +1,9 @@
 <?php
 
-namespace Libs\routes;
+namespace RianWlp\Libs\routes;
 
-use Libs\routes\RouterCollection;
-use Libs\routes\Dispatch;
+use RianWlp\Libs\routes\Dispatch;
+use RianWlp\Libs\routes\RouterCollection;
 
 // https://alexandrebbarbosa.wordpress.com/2019/04/23/phpconstruir-um-sistema-de-rotas-para-mvc-terceira-parte/
 // https://alexandrebbarbosa.wordpress.com/2019/04/19/phpconstruir-um-sistema-de-rotas-para-mvc-segunda-parte/

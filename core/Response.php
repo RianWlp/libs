@@ -1,6 +1,6 @@
 <?php
 
-namespace Libs\core;
+namespace RianWlp\Libs\core;
 
 // https://www.php.net/manual/en/function.http-response-code.php
 class Response

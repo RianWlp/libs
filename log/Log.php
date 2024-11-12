@@ -2,9 +2,10 @@
 
 // Essa model NAO vai poder ficar aqui pois
 // Ver para mover ela para outro lugar
-namespace Libs\log;
-use Libs\core\Entidade;
+namespace RianWlp\Libs\log;
+use RianWlp\Libs\core\Entidade;
 use Exception;
+
 
 class Log extends Entidade
 {

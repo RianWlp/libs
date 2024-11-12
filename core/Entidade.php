@@ -1,7 +1,7 @@
 <?php
 
-namespace Libs\core;
-use Libs\core\ActiveRecords;
+namespace RianWlp\Libs\core;
+use RianWlp\Libs\core\ActiveRecords;
 
 abstract class Entidade extends ActiveRecords
 {

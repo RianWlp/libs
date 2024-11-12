@@ -1,7 +1,7 @@
 <?php
 
-namespace Libs\core;
-use Db\DbConnect;
+namespace RianWlp\Libs\core;
+use RianWlp\Db\core\DbConnect;
 use Exception;
 
 abstract class ActiveRecords

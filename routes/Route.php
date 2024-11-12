@@ -1,6 +1,6 @@
 <?php
 
-namespace Libs\routes;
+namespace RianWlp\Libs\routes;
 
 final class Route
 {

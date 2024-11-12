@@ -1,6 +1,6 @@
 <?php
 
-namespace Libs\utils;
+namespace RianWlp\Libs\utils;
 
 use DateTime;
 
