@@ -1,6 +1,7 @@
 {
-    "name": "rianwlp/dev-master",
+    "name": "rianwlp/libs",
     "type": "project",
+    "version": "0.0.1",
     "authors": [
         {
             "name": "rianwlp",
@@ -17,7 +18,6 @@
         ]
     },
     "require": {
-        "firebase/php-jwt": "^6.10",
-        "rianwlp/libs": "dev-master"
+        "firebase/php-jwt": "^6.10"
     }
 }
