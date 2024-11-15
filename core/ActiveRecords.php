@@ -1,6 +1,7 @@
 <?php
 
 namespace RianWlp\Libs\core;
+
 use RianWlp\Db\DbConnect;
 use Exception;
 
@@ -116,7 +117,24 @@ abstract class ActiveRecords
         return $vars;
     }
 
-    public function loadAll(DbConnect $connect)
+    public function getAll()
+    {
+        $tabela = $this::_tableName;
+
+        $sql = "SELECT * FROM $tabela";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->execute();
+
+        $ocorrencias = null;
+        while ($ocorrencia = $stmt->fetchObject()) {
+            $ocorrencias[] = $ocorrencia;
+        }
+
+        return $ocorrencias;
+    }
+
+    public function loadAll()
     {
         $tabela = $this::_tableName;
 
@@ -134,6 +152,7 @@ abstract class ActiveRecords
     }
 
     // public function load(DbConnect $connect)
+    // Esse metodo acho que vai ser removido
     public function load(int $id)
     {
         $id     = $this::_primaryKey;
