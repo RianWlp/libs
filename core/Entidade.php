@@ -1,25 +1,39 @@
 <?php
 
 namespace RianWlp\Libs\core;
+
 use RianWlp\Libs\core\ActiveRecords;
 
 abstract class Entidade extends ActiveRecords
 {
-
     /**
      * Atributos de log, podem ser usados para informar quem e quando fez a operacao no registro
      */
 
-    // protected $id_usuario_incluiu;
-    protected $data_incluido;
+    protected $dt_incluido;
     protected $hora_incluido;
 
-    protected $data_atualizado;
+    protected $dt_atualizado;
     protected $hora_atualizado;
 
-    // protected $id_usuario_deletou;
-    protected $data_deletado;
+    protected $dt_deletado;
     protected $hora_deletado;
+
+    public function getDtIncluido(): ?string
+    {
+        return $this->dt_incluido;
+    }
+
+    public function getDtAtualizado(): ?string
+    {
+        return $this->dt_atualizado;
+    }
+
+    public function getDtDeletado(): ?string
+    {
+        return $this->dt_deletado;
+    }
+
 
     /**
      * O metodo store chama o metodo save do ActiveRecords ou seja, delega a sua funcao para outra classe 
