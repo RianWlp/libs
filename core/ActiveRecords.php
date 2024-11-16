@@ -16,14 +16,20 @@ abstract class ActiveRecords
 
     public function store()
     {
-        $id = trim($this::_primaryKey);
+        $id = trim($this::_primaryKey); // Obtém o nome da chave primária
         if (!empty($id)) {
-
-            return get_object_vars($this)[$id] ? $this->update($this->connect) : $this->insert($this->connect);
+            $objectVars = get_object_vars($this); // Armazena as propriedades do objeto em uma variável
+            // return isset($objectVars[$id]) && $objectVars[$id]  ? $this->update($this->connect)  : $this->insert($this->connect);
+            return isset($objectVars[$id]) && $objectVars[$id]  ? $this->update()  : $this->insert();
         }
+
+        // $id = trim($this::_primaryKey);
+        // if (!empty($id)) {
+        //     return get_object_vars($this)[$id] ? $this->update($this->connect) : $this->insert($this->connect);
+        // }
     }
 
-    private function insert($connect)
+    private function insert()
     {
         $tabela = $this::_tableName;
 
@@ -44,7 +50,7 @@ abstract class ActiveRecords
         $secordArguments = trim($secordArguments, ',');
 
         $sql  = "INSERT INTO $tabela ($firtArguments) VALUES ($secordArguments)";
-        $stmt = $connect->getConnect()->prepare($sql);
+        $stmt = $this->connect->getConnect()->prepare($sql);
 
         $firtArguments = explode(',', $firtArguments);
 
@@ -55,10 +61,10 @@ abstract class ActiveRecords
         }
 
         $stmt->execute();
-        return $this->getLastId($connect);
+        return $this->getLastId();
     }
 
-    private function update($connect)
+    private function update()
     {
         $id     = $this::_primaryKey;
         $tabela = $this::_tableName;
@@ -83,7 +89,7 @@ abstract class ActiveRecords
 
         $arguments = $arguments . ',id = :id';
 
-        $stmt = $connect->getConnect()->prepare($sql);
+        $stmt = $this->connect->getConnect()->prepare($sql);
 
         $arguments = explode(',', $arguments);
         foreach ($arguments as $key => $column) {
