@@ -29,6 +29,23 @@ abstract class ActiveRecords
         // }
     }
 
+
+    private function executeSQL ($stmt) : void{
+
+        $stmt->execute();
+        // try {
+        //     $stmt->execute();
+        // } catch (\PDOException $e) {
+        //     var_dump($e->getMessage());
+        // }
+        // Da um 500 porem da certo, verificar para arrumar esse problema
+        // if (!$stmt->execute()) {
+        //     throw new Exception("Erro ao atualizar o registro com $id $var da tabela $tabela");
+        // }
+
+        // echo "Registro com $id $var atualizado com sucesso.";
+    }
+
     private function insert()
     {
         $tabela = $this::_tableName;
@@ -102,17 +119,7 @@ abstract class ActiveRecords
             $stmt->bindValue(":$column", $vars[$column]);
         }
 
-        // try {
-        //     $stmt->execute();
-        // } catch (\PDOException $e) {
-        //     var_dump($e->getMessage());
-        // }
-        // Da um 500 porem da certo, verificar para arrumar esse problema
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao atualizar o registro com $id $var da tabela $tabela");
-        }
-
-        echo "Registro com $id $var atualizado com sucesso.";
+        self::executeSQL($stmt);
     }
 
     private function getVars(): array
@@ -210,12 +217,7 @@ abstract class ActiveRecords
         $stmt = $this->connect->getConnect()->prepare($sql);
         $stmt->bindValue(":$id", $var);
 
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao inativar o registro com $id $var da tabela $tabela.");
-        }
-
-        // Opcional: Retorna uma mensagem de sucesso se desejado
-        return "Registro com $id $var inativado com sucesso.";
+        self::executeSQL($stmt);
     }
 
     public function hardDelete()
@@ -230,12 +232,7 @@ abstract class ActiveRecords
         $stmt = $this->connect->getConnect()->prepare($sql);
         $stmt->bindValue(":$id", $var);
 
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao deletar o registro com $id $var da tabela $tabela.");
-        }
-
-        // Opcional: Retorna uma mensagem de sucesso se desejado
-        return "Registro com $id $var deletado com sucesso.";
+        self::executeSQL($stmt);
     }
 
     public function hardDeleteAll()
