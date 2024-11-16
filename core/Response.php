@@ -8,6 +8,7 @@ class Response
     // Define o cabeçalho Content-Type como JSON
     public static function setJsonContentType()
     {
+        header('Access-Control-Allow-Origin: *');
         header('Content-Type: application/json');
     }
 
