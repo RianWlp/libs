@@ -3,6 +3,7 @@
 namespace RianWlp\Libs\core;
 
 use RianWlp\Libs\core\ActiveRecords;
+use stdClass;
 
 abstract class Entidade extends ActiveRecords
 {
@@ -10,6 +11,7 @@ abstract class Entidade extends ActiveRecords
      * Atributos de log, podem ser usados para informar quem e quando fez a operacao no registro
      */
 
+    protected $dt_criacao;
     protected $dt_incluido;
     protected $hora_incluido;
 
@@ -18,6 +20,38 @@ abstract class Entidade extends ActiveRecords
 
     protected $dt_deletado;
     protected $hora_deletado;
+
+    // O método get retorna um objeto stdClass
+    public function get(int $id): stdClass
+    {
+        $explode = explode('\\', get_called_class());
+        $classe  = end($explode);
+
+        // $obj = (object)array('id' => 1, 'nome' => 'rianwlp', 'teste' => 'teste');
+        $obj = $this->getById((int)$id);
+        if ($obj === null) {
+            throw new \Exception("O $classe com ID $id não encontrado.");
+        }
+
+        $vars = get_class_vars(get_called_class());
+
+        $objNew = new stdClass();
+        $objNew->dt_criacao    = $this->dt_criacao;
+        $objNew->dt_atualizado = $this->dt_atualizado;
+        $objNew->dt_deletado   = $this->dt_deletado;
+
+        foreach ($vars as $key => $var) {
+
+            $objNew->$key = $obj->{$key};
+        }
+
+        return $objNew;
+    }
+
+    public function getDtCriacao(): ?string
+    {
+        return $this->dt_criacao;
+    }
 
     public function getDtIncluido(): ?string
     {

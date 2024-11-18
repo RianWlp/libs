@@ -161,7 +161,7 @@ abstract class ActiveRecords
             $ocorrencias[] = $ocorrencia;
         }
 
-        return $ocorrencias;
+        return (Object)$ocorrencias;
     }
 
     // public function load(DbConnect $connect)
