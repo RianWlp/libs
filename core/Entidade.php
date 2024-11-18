@@ -22,31 +22,31 @@ abstract class Entidade extends ActiveRecords
     protected $hora_deletado;
 
     // O método get retorna um objeto stdClass
-    public function get(int $id): stdClass
-    {
-        $explode = explode('\\', get_called_class());
-        $classe  = end($explode);
+    // public function get(int $id): stdClass
+    // {
+    //     $explode = explode('\\', get_called_class());
+    //     $classe  = end($explode);
 
-        // $obj = (object)array('id' => 1, 'nome' => 'rianwlp', 'teste' => 'teste');
-        $obj = $this->getById((int)$id);
-        if ($obj === null) {
-            throw new \Exception("O $classe com ID $id não encontrado.");
-        }
+    //     // $obj = (object)array('id' => 1, 'nome' => 'rianwlp', 'teste' => 'teste');
+    //     $obj = $this->getById((int)$id);
+    //     if ($obj === null) {
+    //         throw new \Exception("O $classe com ID $id não encontrado.");
+    //     }
 
-        $vars = get_class_vars(get_called_class());
+    //     $vars = get_class_vars(get_called_class());
 
-        $objNew = new stdClass();
-        $objNew->dt_criacao    = $this->dt_criacao;
-        $objNew->dt_atualizado = $this->dt_atualizado;
-        $objNew->dt_deletado   = $this->dt_deletado;
+    //     $objNew = new stdClass();
+    //     $objNew->dt_criacao    = $this->dt_criacao;
+    //     $objNew->dt_atualizado = $this->dt_atualizado;
+    //     $objNew->dt_deletado   = $this->dt_deletado;
 
-        foreach ($vars as $key => $var) {
+    //     foreach ($vars as $key => $var) {
 
-            $objNew->$key = $obj->{$key};
-        }
+    //         $objNew->$key = $obj->{$key};
+    //     }
 
-        return $objNew;
-    }
+    //     return $objNew;
+    // }
 
     public function getDtCriacao(): ?string
     {
