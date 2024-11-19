@@ -13,8 +13,8 @@ class Log extends Entidade
     protected ?int    $fk_usuario; // Acho que isso deveria ser uma instancia de Usuario
     protected string  $endpoint;
     protected string  $metodo;
-    protected ?string $dados_requisicao;
-    protected ?string $dados_resposta;
+    protected ?Object $dados_requisicao;
+    protected ?Object $dados_resposta;
     protected int     $status_http;
     protected string  $dt_requisicao;
     protected ?string $ip_origem;
@@ -44,12 +44,12 @@ class Log extends Entidade
         $this->metodo = $metodo;
     }
 
-    public function setDadosRequisicao(?string $dados_requisicao): void
+    public function setDadosRequisicao(?Object $dados_requisicao): void
     {
         $this->dados_requisicao = $dados_requisicao;
     }
 
-    public function setDadosResposta(?string $dados_resposta): void
+    public function setDadosResposta(?Object $dados_resposta): void
     {
         $this->dados_resposta = $dados_resposta;
     }

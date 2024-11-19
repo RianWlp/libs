@@ -93,8 +93,8 @@ class HttpClient
         // $log->setFkUsuario($fk_usuario);
         $log->setEndpoint($endpoint);
         $log->setMetodo($method);
-        $log->setDadosRequisicao((string)$dataRequest);
-        $log->setDadosResposta((string)$dataResponse);
+        $log->setDadosRequisicao((Object)$dataRequest);
+        $log->setDadosResposta((Object)$dataResponse);
         $log->setStatusHttp($statusCode);
         $log->setIpOrigem($ipOrigem);
 
