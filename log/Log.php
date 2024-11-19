@@ -1,27 +1,23 @@
 <?php
 
-// Essa model NAO vai poder ficar aqui pois
-// Ver para mover ela para outro lugar
 namespace RianWlp\Libs\log;
-use RianWlp\Libs\core\Entidade;
-use Exception;
 
+use RianWlp\Libs\core\Entidade;
 
 class Log extends Entidade
 {
     const _primaryKey = 'id';
     const _tableName  = 'logs';
 
-    private int $id;
-    private int $fk_usuario; // Acho que isso deveria ser uma instancia de Usuario
-    // private Usuario $fk_usuario;
-    private string $endpoint;
-    private string $metodo;
-    private ?string $dados_requisicao;
-    private ?string $dados_resposta;
-    private int $status_http;
-    private string $dt_requisicao;
-    private ?string $ip_origem;
+    protected int     $id;
+    protected ?int    $fk_usuario; // Acho que isso deveria ser uma instancia de Usuario
+    protected string  $endpoint;
+    protected string  $metodo;
+    protected ?string $dados_requisicao;
+    protected ?string $dados_resposta;
+    protected int     $status_http;
+    protected string  $dt_requisicao;
+    protected ?string $ip_origem;
 
     public function setFkUsuario(int $fk_usuario): void
     {
@@ -32,7 +28,7 @@ class Log extends Entidade
     {
         $endpoint = trim($endpoint);
         if (empty($endpoint)) {
-            throw new Exception('O endpoint NAO pode ser null');
+            throw new \Exception('O endpoint NAO pode ser null');
         }
 
         $this->endpoint = $endpoint;
@@ -42,7 +38,7 @@ class Log extends Entidade
     {
         $metodo = trim($metodo);
         if (empty($metodo)) {
-            throw new Exception('O  metodo NAO pode ser null');
+            throw new \Exception('O  metodo NAO pode ser null');
         }
 
         $this->metodo = $metodo;
@@ -62,7 +58,7 @@ class Log extends Entidade
     {
         $status_http = trim($status_http);
         if (empty($status_http)) {
-            throw new Exception('O verbo HTTP NAO pode ser null');
+            throw new \Exception('O verbo HTTP NAO pode ser null');
         }
 
         $this->status_http = $status_http;
