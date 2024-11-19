@@ -86,15 +86,15 @@ class HttpClient
         ];
     }
 
-    private function storeLog(string $endpoint, string $method, ?string $dataRequest, ?string $dataResponse, string $statusCode, ?string $ipOrigem): void
+    private function storeLog(string $endpoint, string $method, ?array $dataRequest, ?array $dataResponse, string $statusCode, ?string $ipOrigem): void
     {
         $log = new Log(new DbConnect());
 
         // $log->setFkUsuario($fk_usuario);
         $log->setEndpoint($endpoint);
         $log->setMetodo($method);
-        $log->setDadosRequisicao($dataRequest);
-        $log->setDadosResposta($dataResponse);
+        $log->setDadosRequisicao((string)$dataRequest);
+        $log->setDadosResposta((string)$dataResponse);
         $log->setStatusHttp($statusCode);
         $log->setIpOrigem($ipOrigem);
 
