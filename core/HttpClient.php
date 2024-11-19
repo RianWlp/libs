@@ -2,6 +2,9 @@
 
 namespace RianWlp\Libs\core;
 
+use RianWlp\Db\DbConnect;
+use RianWlp\Libs\log\Log;
+
 class HttpClient
 {
     private string $baseUrl;
@@ -35,7 +38,7 @@ class HttpClient
         return $this->request('DELETE', $endpoint, null, $headers);
     }
 
-    private function request(string $method, string $endpoint, $data = null, array $headers = []): array
+    private function request(string $method, string $endpoint, $dataRequest = null, array $headers = []): array
     {
         // sudo apt-get install php8.3-curl
         $url = $this->baseUrl . $endpoint;
@@ -49,8 +52,8 @@ class HttpClient
         curl_setopt($curl, CURLOPT_HTTPHEADER, $defaultHeaders);
 
         // Se houver dados a serem enviados (por exemplo, em POST ou PUT), adiciona os dados no corpo da requisição
-        if ($data) {
-            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+        if ($dataRequest) {
+            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($dataRequest));
         }
 
         // Executa a requisição e coleta a resposta
@@ -68,14 +71,34 @@ class HttpClient
         curl_close($curl);
 
         // Verifica se a resposta é um JSON válido
-        $data = json_decode($responseBody, true);
+        $dataResponse = json_decode($responseBody, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new \Exception("Erro ao decodificar a resposta JSON.");
         }
 
+        // $ipOrigem = $_SERVER;
+        $ipOrigem = $_SERVER['REMOTE_ADDR'];
+
+        self::storeLog($endpoint, $method, $dataRequest, $dataResponse, $statusCode, $ipOrigem);
         return [
             'status' => $statusCode,
-            'body'   => $data
+            'body'   => $dataResponse
         ];
+    }
+
+    private function storeLog(string $endpoint, string $method, ?string $dataRequest, ?string $dataResponse, string $statusCode, ?string $ipOrigem): void
+    {
+        $log = new Log(new DbConnect());
+
+        // $log->setFkUsuario($fk_usuario);
+        $log->setEndpoint($endpoint);
+        $log->setMetodo($method);
+        $log->setDadosRequisicao($dataRequest);
+        $log->setDadosResposta($dataResponse);
+        $log->setStatusHttp($statusCode);
+        $log->setIpOrigem($ipOrigem);
+
+        // Depois, salvamos o log no banco ou fazemos o tratamento necessário.
+        $log->store();
     }
 }

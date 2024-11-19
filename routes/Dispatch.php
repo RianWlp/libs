@@ -52,29 +52,9 @@ class Dispatch
     // Preciso fazer para o TOKEN nao durar 15 minutos, quando a pessoa der LOGOUT o token (e) invalidado e precisa gerar outro quando entrar novamente,
     // acho que criar o token no Usuario nao (e) o correto
 
-    // public function storeLog(stdClass $params)
-    // public function storeLog()
-    // {
-    //     $connect = new DbConnect();
-    //     // $log = new Log($connect);
-
-    //     // $log->setFkUsuario($fk_usuario);
-    //     // $log->setEndpoint($endpoint);
-    //     // $log->setMetodo($metodo);
-    //     // $log->setDadosRequisicao($dados_requisicao);
-    //     // $log->setDadosResposta($dados_resposta);
-    //     // $log->setStatusHttp($status_http);
-    //     // // $log->setDtRequisicao($dt_requisicao);
-    //     // $log->setIpOrigem($ip_origem);
-
-    //     // // Depois, salvamos o log no banco ou fazemos o tratamento necessário.
-    //     // $log->store();
-    // }
-
     // Acho que isso nao vai ficar aqui
     protected function token(string $token)
     {
-
         $objToken = new Token();
         var_dump($objToken->validate($token));
     }
