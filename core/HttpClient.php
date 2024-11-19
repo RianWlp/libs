@@ -37,6 +37,7 @@ class HttpClient
 
     private function request(string $method, string $endpoint, $data = null, array $headers = []): array
     {
+        // sudo apt-get install php8.3-curl
         $url = $this->baseUrl . $endpoint;
 
         $curl = curl_init($url);
@@ -54,12 +55,27 @@ class HttpClient
 
         // Executa a requisição e coleta a resposta
         $responseBody = curl_exec($curl);
+
+        // Verificação de erro do CURL
+        if (curl_errno($curl)) {
+            $error = curl_error($curl);
+            curl_close($curl);
+            throw new \Exception("Erro ao executar a requisição CURL: $error");
+        }
+
+        // Obtém o código de status da resposta
         $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
 
+        // Verifica se a resposta é um JSON válido
+        $data = json_decode($responseBody, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Exception("Erro ao decodificar a resposta JSON.");
+        }
+
         return [
             'status' => $statusCode,
-            'data' => $responseBody
+            'body'   => $data
         ];
     }
 }
