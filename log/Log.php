@@ -9,6 +9,9 @@ use Exception;
 
 class Log extends Entidade
 {
+    const _primaryKey = 'id';
+    const _tableName  = 'logs';
+
     private int $id;
     private int $fk_usuario; // Acho que isso deveria ser uma instancia de Usuario
     // private Usuario $fk_usuario;
