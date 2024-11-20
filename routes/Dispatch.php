@@ -12,10 +12,6 @@ class Dispatch
 
     public function dispach($callback, $params = [], $namespace = self::DEFAULT_NAMESPACE)
     {
-        // self::token($params['token']);
-        // var_dump($params['token']);
-        // die();
-
         // Antes de poder executar a rota eu preciso validar o TOKEN da mesma
         // Validar se ele (e) valido
         // Validar o tempo restante e se ja nao passou
@@ -24,6 +20,10 @@ class Dispatch
         // A pessoa cada vez que faz login recebe um token novo
         // O user na coluna TOKEN vai receber o token que vai ser validado toda vez ao tentar passar por esse caminho aqui
         // assim eu sei que ele esta tentando acessar uma rota e que ele pode fazer isso
+
+        if (!isset($params['token']) || !$this->validateToken($params['token'])) {
+            throw new \Exception('Token inválido ou ausente');
+        }
 
         if (is_callable($callback['callback'])) {
             return call_user_func_array($callback['callback'], array_values($params));
@@ -47,15 +47,14 @@ class Dispatch
         throw new \Exception('Erro ao despachar: método não implementado');
     }
 
-
     // Preciso fazer para a ROTA ser obrigatoria (obrigar o TOKEN)
     // Preciso fazer para o TOKEN nao durar 15 minutos, quando a pessoa der LOGOUT o token (e) invalidado e precisa gerar outro quando entrar novamente,
     // acho que criar o token no Usuario nao (e) o correto
 
     // Acho que isso nao vai ficar aqui
-    protected function token(string $token)
+    protected function validateToken(string $token): bool
     {
         $objToken = new Token();
-        var_dump($objToken->validate($token));
+        return $objToken->isValid($token);
     }
 }

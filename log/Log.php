@@ -44,14 +44,18 @@ class Log extends Entidade
         $this->metodo = $metodo;
     }
 
-    public function setDadosRequisicao(?Object $dados_requisicao): void
+    public function setDadosRequisicao(?array $dados_requisicao): void
     {
-        $this->dados_requisicao = $dados_requisicao;
+        if (!empty($dados_requisicao)) {
+            $this->dados_requisicao = json_encode($dados_requisicao);
+        }
     }
 
-    public function setDadosResposta(?Object $dados_resposta): void
+    public function setDadosResposta(?array $dados_resposta): void
     {
-        $this->dados_resposta = $dados_resposta;
+        if (!empty($dados_resposta)) {
+            $this->dados_resposta = json_encode($dados_resposta);
+        }
     }
 
     public function setStatusHttp(int $status_http): void

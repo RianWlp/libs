@@ -25,17 +25,15 @@ class Token
      */
     public function create(array $data): string
     {
-        $issuedAt   = time();
-        $expiration = $issuedAt + (15 * 60); // Token válido por 15 minutos  (Acho que remover esses 15 minutos)
+        $issuedAt = time();
+        $expiration = $issuedAt + (15 * 60); // Token válido por 15 minutos
 
         $payload = [
-            'iss'  => 'http://localhost:82',     // Emissor
-            'aud'  => 'http://localhost:82',     // Audiência
-            'iat'  => $issuedAt,                 // Emitido em
-            'exp'  => $expiration,               // Expiração
-            'data' => $data                      // Dados do usuário
-            // 'iss'  => 'https://seu_dominio.com', // Emissor
-            // 'aud'  => 'https://seu_dominio.com', // Audiência
+            'iss'  => 'http://localhost:82', // Emissor
+            'aud'  => 'http://localhost:82', // Audiência
+            'iat'  => $issuedAt,             // Emitido em
+            'exp'  => $expiration,           // Expiração
+            'data' => $data                  // Dados do usuário
         ];
 
         return JWT::encode($payload, $this->secretKey, 'HS256');
@@ -57,6 +55,24 @@ class Token
         } catch (Exception $e) {
             // Trate a exceção conforme necessário (por exemplo, registrar erro, lançar nova exceção etc.)
             return null;
+        }
+    }
+
+    /**
+     * Verifica se um token JWT é válido.
+     *
+     * @param string $token Token JWT a ser verificado
+     * @return bool Retorna true se o token for válido, false caso contrário
+     */
+    public function isValid(string $token): bool
+    {
+        try {
+            $decoded = JWT::decode($token, new Key($this->secretKey, 'HS256'));
+
+            // Verifica se a data de expiração já passou
+            return isset($decoded->exp) && $decoded->exp < time();
+        } catch (Exception $e) {
+            return false; // Token inválido ou erro de decodificação
         }
     }
 }

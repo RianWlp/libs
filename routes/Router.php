@@ -4,6 +4,7 @@ namespace RianWlp\Libs\routes;
 
 use RianWlp\Libs\routes\Dispatch;
 use RianWlp\Libs\routes\RouterCollection;
+use RianWlp\Libs\utils\Token;
 
 // https://alexandrebbarbosa.wordpress.com/2019/04/23/phpconstruir-um-sistema-de-rotas-para-mvc-terceira-parte/
 // https://alexandrebbarbosa.wordpress.com/2019/04/19/phpconstruir-um-sistema-de-rotas-para-mvc-segunda-parte/
@@ -115,5 +116,19 @@ class Router
             return $protocol . $server . $uri . $this->routeCollection->convert($pattern, $params);
         }
         return false;
+    }
+
+    public function secure($requestType, $pattern, $callback, $namespace = null)
+    {
+        // Insere uma verificação explícita para rotas seguras
+        $this->routeCollection->add($requestType, $pattern, function ($params) use ($callback) {
+
+            $token = new Token();
+            if (!isset($params['token']) || !($token->isValid($params['token']))) {
+                throw new \Exception('Token inválido ou ausente');
+            }
+            return call_user_func($callback, $params);
+        }, $namespace);
+        return $this;
     }
 }

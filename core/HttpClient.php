@@ -15,6 +15,7 @@ class HttpClient
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->authHeaders = [
             'Authorization' => $auth['type'] . ' ' . $auth['token']
+            // Authorization: Bearer <seu_token_aqui>
         ];
     }
 
@@ -93,8 +94,8 @@ class HttpClient
         // $log->setFkUsuario($fk_usuario);
         $log->setEndpoint($endpoint);
         $log->setMetodo($method);
-        $log->setDadosRequisicao((Object)$dataRequest);
-        $log->setDadosResposta((Object)$dataResponse);
+        $log->setDadosRequisicao($dataRequest);
+        $log->setDadosResposta($dataResponse);
         $log->setStatusHttp($statusCode);
         $log->setIpOrigem($ipOrigem);
 
