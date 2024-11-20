@@ -21,9 +21,9 @@ class Dispatch
         // O user na coluna TOKEN vai receber o token que vai ser validado toda vez ao tentar passar por esse caminho aqui
         // assim eu sei que ele esta tentando acessar uma rota e que ele pode fazer isso
 
-        if (!isset($params['token']) || !$this->validateToken($params['token'])) {
-            throw new \Exception('Token inválido ou ausente');
-        }
+        // if (!isset($params['token']) || !$this->validateToken($params['token'])) {
+        //     throw new \Exception('Token inválido ou ausente');
+        // }
 
         if (is_callable($callback['callback'])) {
             return call_user_func_array($callback['callback'], array_values($params));

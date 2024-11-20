@@ -125,7 +125,7 @@ class Router
 
             $token = new Token();
             if (!isset($params['token']) || !($token->isValid($params['token']))) {
-                throw new \Exception('Token inválido ou ausente');
+                // throw new \Exception('Token inválido ou ausente');
             }
             return call_user_func($callback, $params);
         }, $namespace);
