@@ -13,8 +13,8 @@ class Log extends Entidade
     protected ?int    $fk_usuario; // Acho que isso deveria ser uma instancia de Usuario
     protected string  $endpoint;
     protected string  $metodo;
-    protected ?Object $dados_requisicao;
-    protected ?Object $dados_resposta;
+    protected ?string $dados_requisicao;
+    protected ?string $dados_resposta;
     protected int     $status_http;
     protected string  $dt_requisicao;
     protected ?string $ip_origem;
