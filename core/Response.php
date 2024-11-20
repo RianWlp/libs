@@ -28,6 +28,10 @@ class Response
 
     public static function sendJsonResponse($data, int $statusCode = 200, string $message = ''): void
     {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Allow-Credentials: true');
         header('Content-Type: application/json');
         http_response_code($statusCode);  // Defina o código do status HTTP
 

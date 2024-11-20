@@ -85,6 +85,10 @@ CREATE TABLE logs (
 );
 
 INSERT INTO usuarios (nome, username, email, senha, cpf, dt_nascimento)
+VALUES
+('Rian Welp', 'RianWlp', 'rianwlp@example.com', '07bef413ae661054d17ea39f4631de0e081032d4dbef92a71d01fc0e4234d5d5', '222.333.444-55', '1996-02-21');
+
+INSERT INTO usuarios (nome, username, email, senha, cpf, dt_nascimento)
 
 VALUES
 ('João Silva', 'joaosilva', 'joaosilva@example.com', 'senha123', '123.456.789-00', '1990-05-12'),
@@ -96,8 +100,8 @@ VALUES
 ('Juliana Martins', 'julianamartins', 'julianamartins@example.com', 'senha112', '321.987.654-00', '1993-12-18'),
 ('Marcos Pereira', 'marcospereira', 'marcospereira@example.com', 'senha223', '111.222.333-44', '1987-10-09'),
 ('Patrícia Rocha', 'patriciarocha', 'patriciarocha@example.com', 'senha334', '444.555.666-77', '1984-09-15'),
-('Lucas Almeida', 'lucasalmeida', 'lucasalmeida@example.com', 'senha445', '222.333.444-55', '1996-02-21');
-
+('Lucas Almeida', 'lucasalmeida', 'lucasalmeida@example.com', 'senha445', '222.333.444-55', '1996-02-21'),
+('Rian Welp', 'RianWlp', 'rianwlp@example.com', '07bef413ae661054d17ea39f4631de0e081032d4dbef92a71d01fc0e4234d5d5', '222.333.444-55', '1996-02-21');
 
 INSERT INTO eventos (nome, descricao, dt_inicio, dt_fim, capacidade_maxima)
 VALUES
@@ -109,7 +113,6 @@ VALUES
 ('Curso de Desenvolvimento Web', 'Curso introdutório de HTML, CSS e JavaScript.', '2024-12-03 09:00:00', '2024-12-03 17:00:00', 75),
 ('Oficina de Design Gráfico', 'Aprenda os fundamentos do design e ferramentas gráficas.', '2024-12-07 10:00:00', '2024-12-07 16:00:00', 40),
 ('Encontro de Robótica', 'Demonstrações e palestras sobre robótica e automação.', '2024-11-25 08:00:00', '2024-11-25 14:00:00', 60);
-
 
 INSERT INTO inscricoes (fk_usuario, fk_evento)
 VALUES
