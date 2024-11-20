@@ -16,7 +16,7 @@ class DbConnect
 
                 // $json = json_decode(file_get_contents(ROOT_DIR . '/config/usuarios.json'));
                 // $json = json_decode(file_get_contents('/var/www/html/sistema-eventos-arquitetura-software/libs/config/usuarios.json'));
-                $json = json_decode(file_get_contents('/var/www/html/sistema-eventos-arquitetura-software-v2/libs/config/usuarios.json'));
+                $json = json_decode(file_get_contents('/var/www/html/sistema-eventos-arquitetura-software-v2/libs/config/eventos.json'));
                 self::$connect = new \PDO("pgsql:host={$json->host} port={$json->port} dbname={$json->name} user={$json->user} password={$json->pass}");
                 self::$connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             }
