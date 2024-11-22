@@ -3,7 +3,6 @@
 namespace RianWlp\Libs\core;
 
 use RianWlp\Db\DbConnect;
-use Exception;
 
 abstract class ActiveRecords
 {
@@ -29,21 +28,9 @@ abstract class ActiveRecords
         // }
     }
 
-
-    private function executeSQL ($stmt) : void{
-
+    private function executeSQL($stmt): void
+    {
         $stmt->execute();
-        // try {
-        //     $stmt->execute();
-        // } catch (\PDOException $e) {
-        //     var_dump($e->getMessage());
-        // }
-        // Da um 500 porem da certo, verificar para arrumar esse problema
-        // if (!$stmt->execute()) {
-        //     throw new Exception("Erro ao atualizar o registro com $id $var da tabela $tabela");
-        // }
-
-        // echo "Registro com $id $var atualizado com sucesso.";
     }
 
     private function insert()
@@ -161,7 +148,7 @@ abstract class ActiveRecords
             $ocorrencias[] = $ocorrencia;
         }
 
-        return (Object)$ocorrencias;
+        return (object)$ocorrencias;
     }
 
     // public function load(DbConnect $connect)
@@ -256,5 +243,19 @@ abstract class ActiveRecords
         $stmt->execute();
 
         return $stmt->fetch(\PDO::FETCH_OBJ)->max;
+    }
+
+    public function exists(string $key, string $value): bool
+    {
+        $tabela = $this::_tableName;
+
+        $sql = "SELECT $key FROM $tabela WHERE $key = :$key LIMIT 1;";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(":$key", $value);
+
+        $stmt->execute();
+
+        // Retorna true se o registro existe, false caso contrário
+        return (bool) $stmt->fetchColumn();
     }
 }

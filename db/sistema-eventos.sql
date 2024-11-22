@@ -7,7 +7,7 @@ CREATE DATABASE eventos
     TEMPLATE = template0
 ;
 
-DROP TABLE inscricoes; DROP TABLE checkin; DROP TABLE certificados; DROP TABLE eventos; DROP TABLE logs; DROP TABLE usuarios;
+DROP TABLE inscricoes; DROP TABLE presencas; DROP TABLE certificados; DROP TABLE eventos; DROP TABLE logs; DROP TABLE usuarios;
 
 CREATE TABLE usuarios (
     id              SERIAL PRIMARY KEY,
@@ -30,6 +30,7 @@ CREATE TABLE eventos (
     descricao         TEXT,
     dt_inicio         TIMESTAMP NOT NULL,
     dt_fim            TIMESTAMP NOT NULL,
+    codigo_validador  TEXT      NOT NULL,
     capacidade_maxima INT,
     dt_criacao        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dt_atualizado     TIMESTAMP,
@@ -47,13 +48,13 @@ CREATE TABLE inscricoes (
     FOREIGN KEY (fk_evento) REFERENCES eventos(id)
 );
 
-CREATE TABLE checkin (
+CREATE TABLE presencas (
     id                  SERIAL PRIMARY KEY,
     fk_usuario          INT NOT NULL,
     fk_evento           INT NOT NULL,
     presenca_confirmada BOOLEAN DEFAULT FALSE,
-    dt_checkin          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    dt_atualizado      TIMESTAMP,
+    dt_presencas        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    dt_atualizado       TIMESTAMP,
     dt_deletado         TIMESTAMP,
     FOREIGN KEY (fk_usuario) REFERENCES usuarios(id),
     FOREIGN KEY (fk_evento) REFERENCES eventos(id)
@@ -127,7 +128,7 @@ VALUES
 (5, 7),
 (1, 8);
 
-INSERT INTO checkin (fk_usuario, fk_evento, presenca_confirmada)
+INSERT INTO presencas (fk_usuario, fk_evento, presenca_confirmada)
 VALUES
 (1, 1, TRUE),
 (2, 1, FALSE),
