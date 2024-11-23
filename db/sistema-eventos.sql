@@ -19,6 +19,7 @@ CREATE TABLE usuarios (
     dt_nascimento    DATE,
     -- token           TEXT NOT NULL,
     token           TEXT,
+    sincronizado    TIMESTAMP,
     dt_criacao      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dt_atualizado   TIMESTAMP,
     dt_deletado     TIMESTAMP
@@ -32,6 +33,7 @@ CREATE TABLE eventos (
     dt_fim            TIMESTAMP NOT NULL,
     codigo_validador  TEXT      NOT NULL,
     capacidade_maxima INT,
+    sincronizado      TIMESTAMP,
     dt_criacao        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dt_atualizado     TIMESTAMP,
     dt_deletado       TIMESTAMP
@@ -41,8 +43,9 @@ CREATE TABLE inscricoes (
     id             SERIAL PRIMARY KEY,
     fk_usuario     INT NOT NULL,
     fk_evento      INT NOT NULL,
+    sincronizado   TIMESTAMP,
     dt_inscricao   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    dt_atualizado TIMESTAMP,
+    dt_atualizado  TIMESTAMP,
     dt_deletado    TIMESTAMP,
     FOREIGN KEY (fk_usuario) REFERENCES usuarios(id),
     FOREIGN KEY (fk_evento) REFERENCES eventos(id)
@@ -53,6 +56,7 @@ CREATE TABLE presencas (
     fk_usuario          INT NOT NULL,
     fk_evento           INT NOT NULL,
     presenca_confirmada BOOLEAN DEFAULT FALSE,
+    sincronizado        TIMESTAMP,
     dt_presencas        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dt_atualizado       TIMESTAMP,
     dt_deletado         TIMESTAMP,
@@ -66,8 +70,9 @@ CREATE TABLE certificados (
     fk_evento           INT NOT NULL,
     url_validacao       TEXT,
     codigo_autenticacao VARCHAR(50) NOT NULL UNIQUE,
+    sincronizado        TIMESTAMP,
     dt_emissao          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    dt_atualizado      TIMESTAMP,
+    dt_atualizado       TIMESTAMP,
     dt_deletado         TIMESTAMP,
     FOREIGN KEY (fk_usuario) REFERENCES usuarios(id),
     FOREIGN KEY (fk_evento) REFERENCES eventos(id)
@@ -81,6 +86,7 @@ CREATE TABLE logs (
     dados_requisicao TEXT,
     dados_resposta   TEXT,
     status_http      INT NOT NULL,
+    sincronizado     TIMESTAMP,
     dt_requisicao    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ip_origem        VARCHAR(45)
 );

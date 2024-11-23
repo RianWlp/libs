@@ -168,6 +168,54 @@ abstract class ActiveRecords
         return $stmt->fetch(\PDO::FETCH_OBJ);
     }
 
+    public function getAllByKeys(array $filters): array
+    {
+        $tabela = $this::_tableName;
+
+        // Constrói a cláusula WHERE dinamicamente com base no array de filtros
+        $whereClauses = [];
+        foreach ($filters as $key => $value) {
+            $whereClauses[] = "$key = :$key";
+        }
+
+        $whereSql = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+
+        $sql = "SELECT * FROM $tabela $whereSql";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+
+        // Associa os valores dinamicamente
+        foreach ($filters as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
+
+        $ocorrencias = [];
+        while ($ocorrencia = $stmt->fetchObject()) {
+            $ocorrencias[] = $ocorrencia;
+        }
+
+        return $ocorrencias;
+    }
+
+    public function getAllByKey(string $key, string $value)
+    {
+        $tabela = $this::_tableName;
+
+        $sql = "SELECT * FROM $tabela";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->execute();
+
+        $ocorrencias = null;
+        while ($ocorrencia = $stmt->fetchObject()) {
+            $ocorrencias[] = $ocorrencia;
+        }
+
+        return $ocorrencias;
+    }
+
     public function getByKey(string $key, string $value)
     {
         $tabela = $this::_tableName;
