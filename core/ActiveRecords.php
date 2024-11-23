@@ -199,6 +199,33 @@ abstract class ActiveRecords
         return $ocorrencias;
     }
 
+    public function getByKeys(array $filters)
+    {
+        $tabela = $this::_tableName;
+
+        // Constrói a cláusula WHERE dinamicamente com base no array de filtros
+        $whereClauses = [];
+        foreach ($filters as $key => $value) {
+            $whereClauses[] = "$key = :$key";
+        }
+
+        $whereSql = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+
+        $sql = "SELECT * FROM $tabela $whereSql LIMIT 1"; // Adiciona LIMIT 1 para garantir apenas um registro
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+
+        // Associa os valores dinamicamente
+        foreach ($filters as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
+
+        // Retorna apenas um único registro como objeto ou null se nenhum for encontrado
+        return $stmt->fetchObject() ?: null;
+    }
+
     public function getAllByKey(string $key, string $value)
     {
         $tabela = $this::_tableName;
