@@ -1,6 +1,7 @@
 <?php
 
 namespace RianWlp\Db;
+
 class DbConnect
 {
     // Desenvolver classes para mexer com o commit e transacoes
@@ -14,9 +15,8 @@ class DbConnect
         try {
             if (!isset(self::$connect)) {
 
-                // $json = json_decode(file_get_contents(ROOT_DIR . '/config/usuarios.json'));
-                // $json = json_decode(file_get_contents('/var/www/html/sistema-eventos-arquitetura-software/libs/config/usuarios.json'));
-                $json = json_decode(file_get_contents('/var/www/html/sistema-eventos-arquitetura-software-v2/libs/config/eventos.json'));
+                $file = __DIR__ . '/../config/eventos.json';
+                $json = json_decode(file_get_contents($file));
                 self::$connect = new \PDO("pgsql:host={$json->host} port={$json->port} dbname={$json->name} user={$json->user} password={$json->pass}");
                 self::$connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             }
