@@ -50,6 +50,8 @@ class Token
     public function validate(string $token): ?array
     {
         try {
+
+            $token   = $this::replaceBearer($token);
             $decoded = JWT::decode($token, new Key($this->secretKey, 'HS256'));
             return (array) $decoded->data; // Retorna dados do usuário no token
         } catch (Exception $e) {
@@ -67,6 +69,7 @@ class Token
     public function isValid(string $token): bool
     {
         try {
+            $token   = $this::replaceBearer($token);
             $decoded = JWT::decode($token, new Key($this->secretKey, 'HS256'));
 
             // Verifica se a data de expiração já passou
@@ -74,5 +77,10 @@ class Token
         } catch (Exception $e) {
             return false; // Token inválido ou erro de decodificação
         }
+    }
+
+    private function replaceBearer(string $token): string
+    {
+        return trim(str_replace('Bearer', '', $token));
     }
 }
