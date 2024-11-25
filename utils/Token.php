@@ -23,18 +23,23 @@ class Token
      * 
      * @throws Exception Se houver algum erro durante a criação do token
      */
-    public function create(array $data): string
+
+    public function create(array $data, bool $noExpiration = false): string
     {
         $issuedAt = time();
-        $expiration = $issuedAt + (15 * 60); // Token válido por 15 minutos
 
+        // Payload base
         $payload = [
-            'iss'  => 'http://localhost:82', // Emissor
-            'aud'  => 'http://localhost:82', // Audiência
+            'iss'  => 'http://localhost:82', // Emissor    (Aqui vai ir o IP da oficial fornecida pelo professor)
+            'aud'  => 'http://localhost:82', // Audiência  (Aqui vai ir o IP da oficial fornecida pelo professor)
             'iat'  => $issuedAt,             // Emitido em
-            'exp'  => $expiration,           // Expiração
             'data' => $data                  // Dados do usuário
         ];
+
+        // Adiciona o campo exp apenas se o token tiver um tempo limite
+        if (!$noExpiration) {
+            $payload['exp'] = $issuedAt + (30 * 60); // Expiração em 15 minutos
+        }
 
         return JWT::encode($payload, $this->secretKey, 'HS256');
     }
@@ -83,5 +88,19 @@ class Token
     private function replaceBearer(string $token): string
     {
         return trim(str_replace('Bearer', '', $token));
+    }
+
+    protected function validateToken(string $token): bool
+    {
+        try {
+            $token   = $this::replaceBearer($token);
+            $decoded = JWT::decode($token,  new Key($this->secretKey, 'HS256'));
+
+
+            // Se for false significa que ele nao (e) mais valido:
+            return isset($decoded->exp) && $decoded->exp < time();
+        } catch (\Exception $e) {
+            return false; // Token inválido
+        }
     }
 }
