@@ -23,6 +23,10 @@ class Dispatch
 
     public function dispach($callback, $params = [], $namespace = self::DEFAULT_NAMESPACE, $isAuthenticated = true)
     {
+        if (empty($namespace)) {
+            $namespace = self::DEFAULT_NAMESPACE;
+        }
+
         if ($isAuthenticated) {
             $headers = getallheaders();
             $token  = $headers['Authorization'] ?? null;
