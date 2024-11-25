@@ -16,45 +16,33 @@ final class Route
         return self::$router;
     }
 
-    public static function private () {
-        var_dump('merda');die();
+    public static function post($pattern, $callback, $namespace = null, $isAuthenticated = true)
+    {
+        return self::getRouter()->post($pattern, $callback, $namespace, $isAuthenticated);
     }
 
-    public static function post($pattern, $callback, $namespace = null)
+    public static function get($pattern, $callback, $namespace = null, $isAuthenticated = true)
     {
-        return self::getRouter()->post($pattern, $callback, $namespace);
+        return self::getRouter()->get($pattern, $callback, $namespace, $isAuthenticated);
     }
 
-    public static function get($pattern, $callback, $namespace = null)
+    public static function put($pattern, $callback, $namespace = null, $isAuthenticated = true)
     {
-        return self::getRouter()->get($pattern, $callback, $namespace);
+        return self::getRouter()->put($pattern, $callback, $namespace, $isAuthenticated);
     }
 
-    public static function put($pattern, $callback, $namespace = null)
+    public static function delete($pattern, $callback, $namespace = null, $isAuthenticated = true)
     {
-        return self::getRouter()->put($pattern, $callback, $namespace);
+        return self::getRouter()->delete($pattern, $callback, $namespace, $isAuthenticated);
     }
 
-    public static function delete($pattern, $callback, $namespace = null)
+    public static function patch($pattern, $callback, $namespace = null, $isAuthenticated = true)
     {
-        return self::getRouter()->delete($pattern, $callback, $namespace);
-    }
-
-    public static function patch($pattern, $callback, $namespace = null)
-    {
-        return self::getRouter()->patch($pattern, $callback, $namespace);
+        return self::getRouter()->patch($pattern, $callback, $namespace, $isAuthenticated);
     }
 
     public static function resolve($pattern)
     {
-        // $boolean = self::getRouter()->resolve($pattern);
-        // if (!(is_null($boolean))) {
-        //     return $boolean;
-        // }
-        // echo '<pre>';
-        // var_dump($pattern);
-        // echo '</pre>';
-        // die();
         return self::getRouter()->resolve($pattern);
     }
 

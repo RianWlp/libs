@@ -10,24 +10,24 @@ class RouterCollection
     protected $routes_delete = [];
     protected $route_names   = [];
 
-    public function add($request_type, $pattern, $callback, $namespace)
+    public function add($request_type, $pattern, $callback, $namespace, $isAuthenticated)
     {
         switch ($request_type) {
 
             case 'post':
-                return $this->addPost($pattern, $callback, $namespace);
+                return $this->addPost($pattern, $callback, $namespace, $isAuthenticated);
                 break;
             case 'get':
-                return $this->addGet($pattern, $callback, $namespace);
+                return $this->addGet($pattern, $callback, $namespace, $isAuthenticated);
                 break;
             case 'put':
-                return $this->addPut($pattern, $callback);
+                return $this->addPut($pattern, $callback, $namespace, $isAuthenticated);
                 break;
             case 'patch':
-                return $this->addPatch($pattern, $callback);
+                return $this->addPatch($pattern, $callback, $namespace, $isAuthenticated);
                 break;
             case 'delete':
-                return $this->addDelete($pattern, $callback);
+                return $this->addDelete($pattern, $callback, $namespace, $isAuthenticated);
                 break;
             default:
                 throw new \Exception('Tipo de requisição não implementado');
@@ -125,7 +125,6 @@ class RouterCollection
         return false;
     }
 
-
     protected function findGet($pattern_sent)
     {
         $pattern_sent = $this->parseUri($pattern_sent);
@@ -168,7 +167,6 @@ class RouterCollection
         return false;
     }
 
-
     protected function findDelete($pattern_sent)
     {
         $pattern_sent = $this->parseUri($pattern_sent);
@@ -202,7 +200,6 @@ class RouterCollection
 
     public function convert($pattern, $params)
     {
-
         if (!is_array($params)) {
 
             $params = array($params);
@@ -234,9 +231,8 @@ class RouterCollection
         return $this->route_names[$name] ?? false;
     }
 
-    protected function addPost($pattern, $callback, $namespace)
+    protected function addPost($pattern, $callback, $namespace, $isAuthenticated)
     {
-
         if (is_array($pattern)) {
 
             $settings = $this->parsePattern($pattern);
@@ -249,11 +245,11 @@ class RouterCollection
         $values = $this->toMap($pattern);
 
         $this->routes_post[$this->definePattern($pattern)] = [
-            'callback'  => $callback,
-            'values'    => $values,
-            'namespace' => $namespace
+            'callback'        => $callback,
+            'values'          => $values,
+            'namespace'       => $namespace,
+            'isAuthenticated' => $isAuthenticated
         ];
-        //  'namespace' => $settings['namespace'] ?? null];
 
 
         if (isset($settings['as'])) {
@@ -262,7 +258,7 @@ class RouterCollection
         return $this;
     }
 
-    protected function addGet($pattern, $callback, $namespace)
+    protected function addGet($pattern, $callback, $namespace, $isAuthenticated)
     {
         if (is_array($pattern)) {
 
@@ -278,9 +274,9 @@ class RouterCollection
         $this->routes_get[$this->definePattern($pattern)] = [
             'callback'  => $callback,
             'values'    => $values,
-            'namespace' => $namespace
+            'namespace' => $namespace,
+            'isAuthenticated' => $isAuthenticated
         ];
-        //  'namespace' => $settings['namespace'] ?? null];
 
         if (isset($settings['as'])) {
             $this->route_names[$settings['as']] = $pattern;
@@ -290,7 +286,7 @@ class RouterCollection
 
     // Validar esse metodo
     // Eu apenas copiei entao pode dar algum problema
-    protected function addPatch($pattern, $callback)
+    protected function addPatch($pattern, $callback, $namespace, $isAuthenticated)
     {
         if (is_array($pattern)) {
 
@@ -306,7 +302,8 @@ class RouterCollection
         $this->routes_put[$this->definePattern($pattern)] = [
             'callback' => $callback,
             'values' => $values,
-            'namespace' => $settings['namespace'] ?? null
+            'namespace' => $settings['namespace'] ?? null,
+            'isAuthenticated' => $isAuthenticated
         ];
         if (isset($settings['as'])) {
             $this->route_names[$settings['as']] = $pattern;
@@ -314,7 +311,7 @@ class RouterCollection
         return $this;
     }
 
-    protected function addPut($pattern, $callback)
+    protected function addPut($pattern, $callback, $namespace, $isAuthenticated)
     {
         if (is_array($pattern)) {
 
@@ -330,7 +327,8 @@ class RouterCollection
         $this->routes_put[$this->definePattern($pattern)] = [
             'callback' => $callback,
             'values' => $values,
-            'namespace' => $settings['namespace'] ?? null
+            'namespace' => $settings['namespace'] ?? null,
+            'isAuthenticated' => $isAuthenticated
         ];
         if (isset($settings['as'])) {
             $this->route_names[$settings['as']] = $pattern;
@@ -338,7 +336,7 @@ class RouterCollection
         return $this;
     }
 
-    protected function addDelete($pattern, $callback)
+    protected function addDelete($pattern, $callback, $namespace, $isAuthenticated)
     {
         if (is_array($pattern)) {
 
@@ -354,7 +352,8 @@ class RouterCollection
         $this->routes_delete[$this->definePattern($pattern)] = [
             'callback' => $callback,
             'values' => $values,
-            'namespace' => $settings['namespace'] ?? null
+            'namespace' => $settings['namespace'] ?? null,
+            'isAuthenticated' => $isAuthenticated
         ];
         if (isset($settings['as'])) {
             $this->route_names[$settings['as']] = $pattern;

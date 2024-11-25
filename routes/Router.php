@@ -21,46 +21,44 @@ class Router
         $this->dispacher       = new Dispatch;
     }
 
-    public function get($pattern, $callback, $namespace)
+    public function get($pattern, $callback, $namespace, $isAuthenticated)
     {
-        $this->routeCollection->add('get', $pattern, $callback, $namespace);
+        $this->routeCollection->add('get', $pattern, $callback, $namespace, $isAuthenticated);
         return $this;
     }
 
-    public function post($pattern, $callback, $namespace)
+    public function post($pattern, $callback, $namespace, $isAuthenticated)
     {
-        $this->routeCollection->add('post', $pattern, $callback, $namespace);
+        $this->routeCollection->add('post', $pattern, $callback, $namespace, $isAuthenticated);
         return $this;
     }
 
-    public function put($pattern, $callback, $namespace)
+    public function put($pattern, $callback, $namespace, $isAuthenticated)
     {
-        $this->routeCollection->add('put', $pattern, $callback, $namespace);
+        $this->routeCollection->add('put', $pattern, $callback, $namespace, $isAuthenticated);
         return $this;
     }
 
-    public function delete($pattern, $callback, $namespace)
+    public function delete($pattern, $callback, $namespace, $isAuthenticated)
     {
-        $this->routeCollection->add('delete', $pattern, $callback, $namespace);
+        $this->routeCollection->add('delete', $pattern, $callback, $namespace, $isAuthenticated);
         return $this;
     }
 
-    public function patch($pattern, $callback, $namespace)
+    public function patch($pattern, $callback, $namespace, $isAuthenticated)
     {
-        $this->routeCollection->add('patch', $pattern, $callback, $namespace);
+        $this->routeCollection->add('patch', $pattern, $callback, $namespace, $isAuthenticated);
         return $this;
     }
-
-    public function where($requestType, $pattern) {}
 
     public function find($requestType, $pattern)
     {
         return $this->routeCollection->where($requestType, $pattern);
     }
 
-    private function dispach($route, $params)
+    private function dispach($route, $params, $namespace, $isAuthenticated)
     {
-        return $this->dispacher->dispach($route->callback, $params);
+        return $this->dispacher->dispach($route->callback, $params, $namespace, $isAuthenticated);
     }
 
     private function notFound()
@@ -71,10 +69,21 @@ class Router
     public function resolve($request)
     {
         $route = $this->find($request->method(), $request->uri());
-        if ($route) {
 
+        if ($route) {
             $params = $route->callback['values'] ? $this->getValues($request->uri(), $route->callback['values']) : $request->getData();
-            return $this->dispach($route, $params, null);
+
+            $headers = getallheaders(); // Extrai o token do cabeçalho
+            $token   = $headers['Authorization'] ?? null;
+
+            // Autentica a rota se necessário
+            if ($route->callback['isAuthenticated'] && !$this->validateToken($token)) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Unauthorized']);
+                exit;
+            }
+
+            return $this->dispach($route, $params, $route->callback['namespace'], $route->callback['isAuthenticated']);
         }
         return $this->notFound();
     }
@@ -118,17 +127,13 @@ class Router
         return false;
     }
 
-    public function secure($requestType, $pattern, $callback, $namespace = null)
+    private function validateToken(?string $token): bool
     {
-        // Insere uma verificação explícita para rotas seguras
-        $this->routeCollection->add($requestType, $pattern, function ($params) use ($callback) {
+        if (!$token) return false;
 
-            $token = new Token();
-            if (!isset($params['token']) || !($token->isValid($params['token']))) {
-                // throw new \Exception('Token inválido ou ausente');
-            }
-            return call_user_func($callback, $params);
-        }, $namespace);
-        return $this;
+        $objToken = new Token();
+        return $objToken->isValid($token);
     }
+
+    public function where($requestType, $pattern) {}
 }
