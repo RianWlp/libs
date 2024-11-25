@@ -29,6 +29,36 @@ class Response
     public static function sendJsonResponse($data, int $statusCode = 200, string $message = ''): void
     {
         // Defina os cabeçalhos apenas uma vez
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: *');
+        header('Access-Control-Allow-Headers: *');
+        header('Access-Control-Allow-Credentials: true');
+        header('Content-Type: application/json');
+        http_response_code($statusCode);
+
+        // Tratamento para requisições OPTIONS (preflight)
+        // if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        //     http_response_code(204);
+        //     exit;
+        // }
+
+        // Define o código do status HTTP
+
+        // Monta a resposta JSON
+        $response = [
+            'status'  => $statusCode,
+            'message' => $message,
+            'data'    => $data,
+        ];
+
+        // Envia a resposta
+        echo json_encode($response);
+        exit;
+    }
+
+    public static function sendJsonResponse2($data, int $statusCode = 200, string $message = ''): void
+    {
+        // Defina os cabeçalhos apenas uma vez
         if (!headers_sent()) {
             header('Access-Control-Allow-Origin: *');
             header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
