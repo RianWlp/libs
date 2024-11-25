@@ -73,7 +73,8 @@ class Token
             $decoded = JWT::decode($token, new Key($this->secretKey, 'HS256'));
 
             // Verifica se a data de expiração já passou
-            return isset($decoded->exp) && $decoded->exp < time();
+            // return isset($decoded->exp) && $decoded->exp < time();
+            return isset($decoded->exp) && $decoded->exp > time();
         } catch (Exception $e) {
             return false; // Token inválido ou erro de decodificação
         }
