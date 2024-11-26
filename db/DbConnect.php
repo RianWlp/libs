@@ -9,11 +9,19 @@ class DbConnect
     /**
      * Construtor que aceita um caminho de arquivo de configuração JSON
      */
-    public function __construct(string $file)
+    public function __construct(?string $file)
     {
         try {
             if (!isset(self::$connect)) {
-                $this->initializeFromFile($file);
+
+                if (empty($file)) {
+                    $file = __DIR__ . '/../config/eventos.json';
+                    $json = json_decode(file_get_contents($file));
+                    self::$connect = new \PDO("pgsql:host={$json->host} port={$json->port} dbname={$json->name} user={$json->user} password={$json->pass}");
+                    self::$connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+                } else {
+                    $this->initializeFromFile($file);
+                }
             }
         } catch (\Exception $e) {
             die("Erro de configuração: " . $e->getMessage());
