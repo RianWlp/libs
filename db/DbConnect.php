@@ -9,7 +9,7 @@ class DbConnect
     /**
      * Construtor que aceita um caminho de arquivo de configuração JSON
      */
-    public function __construct(?string $file)
+    public function __construct(?string $file = null)
     {
         try {
             if (!isset(self::$connect)) {
