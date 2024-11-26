@@ -9,23 +9,67 @@ class DbConnect
     /**
      * Construtor que aceita um caminho de arquivo de configuração JSON
      */
-    public function __construct(?string $file = null)
+
+    public function __construct(mixed $connection = null)
     {
         try {
-            if (!isset(self::$connect)) {
 
-                if (empty($file)) {
-                    $file = __DIR__ . '/../config/eventos.json';
-                    $json = json_decode(file_get_contents($file));
-                    self::$connect = new \PDO("pgsql:host={$json->host} port={$json->port} dbname={$json->name} user={$json->user} password={$json->pass}");
-                    self::$connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            // Se o parâmetro for um array, converte para objeto
+            $connection = is_array($connection) ? (object) $connection : $connection;
+
+            if (is_object($connection)) {
+                self::initializeConnection($connection);
+                return;
+            }
+
+            if (is_string($connection)) {
+
+                if (file_exists($connection)) {
+                    // Se o parâmetro for uma string, presume-se que seja um caminho de arquivo JSON
+                    $json = json_decode(file_get_contents($connection));
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new \Exception('Erro ao decodificar o JSON do arquivo.');
+                    }
+                    self::initializeConnection($json);
                 } else {
-                    $this->initializeFromFile($file);
+                    throw new \Exception('O arquivo especificado não foi encontrado.');
                 }
             }
+
+            if (is_null($connection)) {
+                // Se nenhum parâmetro for fornecido, usa um arquivo de configuração padrão
+                $defaultFile = __DIR__ . '/../config/eventos.json';
+                if (file_exists($defaultFile)) {
+                    $json = json_decode(file_get_contents($defaultFile));
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new \Exception('Erro ao decodificar o JSON do arquivo padrão.');
+                    }
+                    self::initializeConnection($json);
+                } else {
+                    throw new \Exception('Arquivo de configuração padrão não encontrado.');
+                }
+                return;
+            }
+            throw new \Exception('Tipo de conexão não suportado.');
         } catch (\Exception $e) {
             die("Erro de configuração: " . $e->getMessage());
         }
+
+        // try {
+        // if (!isset(self::$connect)) {
+
+        //     if (empty($file)) {
+        //         $file = __DIR__ . '/../config/eventos.json';
+        //         $json = json_decode(file_get_contents($file));
+        //         self::$connect = new \PDO("pgsql:host={$json->host} port={$json->port} dbname={$json->name} user={$json->user} password={$json->pass}");
+        //         self::$connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        //     } else {
+        //         $this->initializeFromFile($file);
+        //     }
+        // }
+        // } catch (\Exception $e) {
+        //     die("Erro de configuração: " . $e->getMessage());
+        // }
     }
 
     /**
@@ -39,7 +83,7 @@ class DbConnect
 
         $json = json_decode(file_get_contents($file));
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception("Erro ao decodificar o arquivo JSON: " . json_last_error_msg());
+            throw new \Exception('Erro ao decodificar o arquivo JSON: ' . json_last_error_msg());
         }
 
         $this->initializeConnection($json);
@@ -50,9 +94,10 @@ class DbConnect
      */
     public static function initializeFromJson(object $config): void
     {
-        if (!isset(self::$connect)) {
-            (new self(""))->initializeConnection($config);
-        }
+        (new self(''))->initializeConnection($config);
+        // if (!isset(self::$connect)) {
+        //     (new self(""))->initializeConnection($config);
+        // }
     }
 
     /**
@@ -61,7 +106,7 @@ class DbConnect
     private function initializeConnection(object $config): void
     {
         if (!isset($config->host, $config->port, $config->name, $config->user, $config->pass)) {
-            throw new \Exception("Configuração inválida. Certifique-se de que todas as propriedades (host, port, name, user, pass) estão presentes.");
+            throw new \Exception('Configuração inválida. Certifique-se de que todas as propriedades (host, port, name, user, pass) estão presentes.');
         }
 
         try {
