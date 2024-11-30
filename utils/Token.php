@@ -21,7 +21,7 @@ class Token
      * @throws Exception Se houver algum erro durante a criação do token
      */
 
-    public function create(array $data, bool $noExpiration = false): string
+    public function create(array $data, bool $expiration = false): string
     {
         $issuedAt = time();
 
@@ -37,12 +37,8 @@ class Token
         error_log("\n Criacao do TOKEN\n");
         error_log("\n -------------------------\n");
 
-        error_log("\n -------------------------\n");
-        error_log("\n Se expira ou nao $noExpiration \n");
-        error_log("\n -------------------------\n");
-
         // Adiciona o campo exp apenas se o token tiver um tempo limite
-        if (!$noExpiration) {
+        if ($expiration) {
             error_log("\n -------------------------\n");
             error_log("\n Vai expirar \n");
             error_log("\n -------------------------\n");
@@ -51,7 +47,7 @@ class Token
 
         return JWT::encode($payload, $this->secretKey, 'HS256');
     }
-
+ 
     // /**
     //  * Valida e decodifica um token JWT.
     //  *
@@ -105,3 +101,13 @@ class Token
         }
     }
 }
+
+
+
+
+$token = new Token();
+$params = ['cu', 'rianwlp'];
+$Ttoken = $token->create($params);
+var_dump($Ttoken);
+
+var_dump($token->validateToken($Ttoken));
