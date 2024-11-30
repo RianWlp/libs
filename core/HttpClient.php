@@ -50,7 +50,15 @@ class HttpClient
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 
         // Define os cabeçalhos para a requisição, incluindo o cabeçalho de autenticação
-        $defaultHeaders = array_merge(['Content-Type: application/json'], $this->authHeaders, $headers);
+        // $defaultHeaders = array_merge(['Content-Type: application/json'], $this->authHeaders, $headers);
+        // curl_setopt($curl, CURLOPT_HTTPHEADER, $defaultHeaders);
+
+        // Vai ficar hardcode mesmo
+        $token = 'Bearer fff.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgyIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdDo4MiIsImlhdCI6MTczMjkzNjMyNiwiZGF0YSI6eyJpZCI6MTEsInVzZXJuYW1lIjoiUmlhbldscCIsImVtYWlsIjoidmlhZG9AZ21haWwuY29tIn19.Q8K5rEU9qPm1-CSIwPoXU9lvZBpAYHw4Mi4bSSMEQ00';
+        $defaultHeaders = [
+            'Content-Type: application/json',
+            "Authorization: $token"
+        ];
         curl_setopt($curl, CURLOPT_HTTPHEADER, $defaultHeaders);
 
         // Se houver dados a serem enviados (por exemplo, em POST ou PUT), adiciona os dados no corpo da requisição
