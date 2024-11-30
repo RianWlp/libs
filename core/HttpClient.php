@@ -14,6 +14,7 @@ class HttpClient
     {
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->authHeaders = [
+            // 'Authorization' => $auth['type'] . ' ' . $auth['token']
             'Authorization' => $auth['type'] . ' ' . $auth['token']
             // Authorization: Bearer <seu_token_aqui>
         ];
@@ -21,7 +22,7 @@ class HttpClient
 
     public function get(string $endpoint, $data = null, array $headers = []): array
     {
-        return $this->request('GET', $endpoint, null, $headers);
+        return $this->request('GET', $endpoint, $data, $headers);
     }
 
     public function post(string $endpoint, $data, array $headers = []): array
