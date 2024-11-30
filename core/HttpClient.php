@@ -54,7 +54,7 @@ class HttpClient
         // curl_setopt($curl, CURLOPT_HTTPHEADER, $defaultHeaders);
 
         // Vai ficar hardcode mesmo
-        $token = 'Bearer fff.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgyIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdDo4MiIsImlhdCI6MTczMjkzNjMyNiwiZGF0YSI6eyJpZCI6MTEsInVzZXJuYW1lIjoiUmlhbldscCIsImVtYWlsIjoidmlhZG9AZ21haWwuY29tIn19.Q8K5rEU9qPm1-CSIwPoXU9lvZBpAYHw4Mi4bSSMEQ00';
+        $token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0IiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdCIsImlhdCI6MTczMjk5MDg3NiwiZGF0YSI6eyJpZCI6MTEsInVzZXJuYW1lIjoiUmlhbldscCIsImVtYWlsIjoicmlhbndscEBnbWFpbC5jb20ifX0.R-p1q-wJ09jI4EHJV48Zvrw8g9FAHrFVEAaknxes-Rc';
         $defaultHeaders = [
             'Content-Type: application/json',
             "Authorization: $token"
