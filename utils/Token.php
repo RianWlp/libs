@@ -27,21 +27,14 @@ class Token
 
         // Payload base
         $payload = [
-            'iss'  => 'http://localhost:82', // Emissor    (Aqui vai ir o IP da oficial fornecida pelo professor)
-            'aud'  => 'http://localhost:82', // Audiência  (Aqui vai ir o IP da oficial fornecida pelo professor)
-            'iat'  => $issuedAt,             // Emitido em
-            'data' => $data                  // Dados do usuário
+            'iss'  => 'http://localhost', // Emissor    (Aqui vai ir o IP da oficial fornecida pelo professor)
+            'aud'  => 'http://localhost', // Audiência  (Aqui vai ir o IP da oficial fornecida pelo professor)
+            'iat'  => $issuedAt,          // Emitido em
+            'data' => $data               // Dados do usuário
         ];
-
-        error_log("\n -------------------------\n");
-        error_log("\n Criacao do TOKEN\n");
-        error_log("\n -------------------------\n");
 
         // Adiciona o campo exp apenas se o token tiver um tempo limite
         if ($expiration) {
-            error_log("\n -------------------------\n");
-            error_log("\n Vai expirar \n");
-            error_log("\n -------------------------\n");
             $payload['exp'] = $issuedAt + (30 * 60); // Expiração em 15 minutos
         }
 
@@ -85,14 +78,8 @@ class Token
         try {
 
             $token   = $this::replaceBearer($token);
-            error_log("\n-------------------------\n");
-            error_log("\nToken que veio $token \n");
-            error_log("\n-------------------------\n");
             $decoded = JWT::decode($token,  new Key($this->secretKey, 'HS256'));
 
-            error_log("\n -------------------------\n");
-            error_log("\n $decoded\n");
-            error_log("\n -------------------------\n");
             // Se for false significa que ele nao (e) mais valido:
             // return isset($decoded->exp) && $decoded->exp < time();
             return isset($decoded);
