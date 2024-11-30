@@ -27,16 +27,16 @@ class Dispatch
             $namespace = self::DEFAULT_NAMESPACE;
         }
 
-        if ($isAuthenticated) {
-            $headers = getallheaders();
-            $token  = $headers['Authorization'] ?? null;
+        // if ($isAuthenticated) {
+        //     $headers = getallheaders();
+        //     $token  = $headers['Authorization'] ?? null;
 
-            if (!$this->validateToken($token)) {
-                http_response_code(401);
-                echo json_encode(['error' => 'Unauthorized']);
-                exit;
-            }
-        }
+        //     if (!$this->validateToken($token)) {
+        //         http_response_code(401);
+        //         echo json_encode(['error' => 'Unauthorized']);
+        //         exit;
+        //     }
+        // }
 
         if (is_callable($callback['callback'])) {
             return call_user_func_array($callback['callback'], array_values($params));

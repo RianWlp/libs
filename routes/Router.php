@@ -77,8 +77,15 @@ class Router
             $token   = $headers['Authorization'] ?? null;
 
             // Autentica a rota se necessário
+            error_log("\n-------------------------\n");
+            error_log("\n Deve ser autenticado ??\n");
+            error_log("\n $route->callback['isAuthenticated'] \n");
+            error_log("\n-------------------------\n");
             if ($route->callback['isAuthenticated'] && !$this->validateToken($token)) {
                 http_response_code(401);
+                error_log("\n-------------------------\n");
+                error_log("\n Nao (e) valido");
+                error_log("\n-------------------------\n");
                 echo json_encode(['error' => 'Unauthorized']);
                 exit;
             }

@@ -307,6 +307,17 @@ abstract class ActiveRecords
         $stmt->execute();
     }
 
+    public function hardDeleteBy(string $column, $value): void
+    {
+        $table = $this::_tableName; // Nome da tabela definido na classe
+        $sql = "DELETE FROM $table WHERE $column = :value";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(':value', $value);
+
+        self::executeSQL($stmt);
+    }
+
     public function getLastId()
     {
         // Isso aqui vou ter que dar uma olhada

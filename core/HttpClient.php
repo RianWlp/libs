@@ -19,7 +19,7 @@ class HttpClient
         ];
     }
 
-    public function get(string $endpoint, array $headers = []): array
+    public function get(string $endpoint, $data = null, array $headers = []): array
     {
         return $this->request('GET', $endpoint, null, $headers);
     }
