@@ -84,7 +84,7 @@ class Token
      * @param string $token Token JWT a ser verificado
      * @return bool Retorna true se o token for válido, false caso contrário
      */
-    protected function validateToken(string $token): bool
+    public function validateToken(string $token): bool
     {
         try {
 

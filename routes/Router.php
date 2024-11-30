@@ -139,7 +139,7 @@ class Router
         if (!$token) return false;
 
         $objToken = new Token();
-        return $objToken->isValid($token);
+        return $objToken->validateToken($token);
     }
 
     public function where($requestType, $pattern) {}
