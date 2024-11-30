@@ -101,13 +101,3 @@ class Token
         }
     }
 }
-
-
-
-
-$token = new Token();
-$params = ['cu', 'rianwlp'];
-$Ttoken = $token->create($params);
-var_dump($Ttoken);
-
-var_dump($token->validateToken($Ttoken));
