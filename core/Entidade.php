@@ -1,9 +1,7 @@
 <?php
 
 namespace RianWlp\Libs\core;
-
 use RianWlp\Libs\core\ActiveRecords;
-use stdClass;
 
 abstract class Entidade extends ActiveRecords
 {
@@ -20,6 +18,22 @@ abstract class Entidade extends ActiveRecords
 
     protected $dt_deletado;
     protected $hora_deletado;
+
+    protected ?string $sincronizado;
+
+    public function setSincronizado(string $sincronizado = null)
+    {
+        if ($sincronizado == null) {
+            $this->sincronizado = $sincronizado;
+            return;
+        }
+        $this->sincronizado = $sincronizado;
+    }
+
+    public function getSincronizado(): ?string
+    {
+        return $this->sincronizado;
+    }
 
     // O método get retorna um objeto stdClass
     // public function get(int $id): stdClass

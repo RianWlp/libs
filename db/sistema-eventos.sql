@@ -9,8 +9,6 @@ CREATE DATABASE eventos
 
 DROP TABLE inscricoes; DROP TABLE presencas; DROP TABLE certificados; DROP TABLE usuarios; DROP TABLE eventos; DROP TABLE logs;
 
--- usuario.id, usuario.nome, evento.nome, evento.descricao, evento.dt_inicio, evento.dt_fim, evento.carga_horaria, certificado.codigo_autenticacao
-
 CREATE TABLE usuarios (
     id              SERIAL PRIMARY KEY,
     nome            TEXT NOT NULL,
@@ -19,7 +17,6 @@ CREATE TABLE usuarios (
     senha           TEXT NOT NULL,
     cpf             VARCHAR(14),
     dt_nascimento   DATE,
-    genero          TEXT,
     -- token           TEXT NOT NULL,
     token           TEXT,
     sincronizado    TIMESTAMP,
@@ -58,12 +55,14 @@ CREATE TABLE inscricoes (
 CREATE TABLE presencas (
     id                  SERIAL PRIMARY KEY,
     fk_inscricao        INT NOT NULL,
+    fk_usuario          INT NOT NULL,
     presenca_confirmada BOOLEAN DEFAULT FALSE,
     sincronizado        TIMESTAMP,
     dt_presenca         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dt_atualizado       TIMESTAMP,
     dt_deletado         TIMESTAMP,
-    FOREIGN KEY (fk_inscricao) REFERENCES inscricoes(id)
+    FOREIGN KEY (fk_inscricao) REFERENCES inscricoes(id),
+    FOREIGN KEY (fk_usuario) REFERENCES usuarios(id)
 );
 
 CREATE TABLE certificados (
@@ -106,8 +105,7 @@ VALUES
 ('Juliana Martins', 'julianamartins', 'julianamartins@example.com', 'senha112', '321.987.654-00', '1993-12-18'),
 ('Marcos Pereira', 'marcospereira', 'marcospereira@example.com', 'senha223', '111.222.333-44', '1987-10-09'),
 ('Patrícia Rocha', 'patriciarocha', 'patriciarocha@example.com', 'senha334', '444.555.666-77', '1984-09-15'),
-('Lucas Almeida', 'lucasalmeida', 'lucasalmeida@example.com', 'senha445', '222.333.444-55', '1996-02-21'),
-('Rian Welp', 'RianWlp', 'rianwlp@universo.univates.br', '07bef413ae661054d17ea39f4631de0e081032d4dbef92a71d01fc0e4234d5d5', '222.333.444-55', '1996-02-21');
+('Lucas Almeida', 'lucasalmeida', 'lucasalmeida@example.com', 'senha445', '222.333.444-55', '1996-02-21');
 
 INSERT INTO eventos (nome, descricao, dt_inicio, dt_fim, capacidade_maxima, codigo_validador, carga_horaria)
 VALUES

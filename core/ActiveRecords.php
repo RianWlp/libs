@@ -230,11 +230,14 @@ abstract class ActiveRecords
     {
         $tabela = $this::_tableName;
 
-        $sql = "SELECT * FROM $tabela";
+        $sql = "SELECT * FROM $tabela WHERE $key = :value";
 
+        // Prepara e executa a consulta
         $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(':value', $value);
         $stmt->execute();
 
+        // Busca os resultados e retorna como array
         $ocorrencias = null;
         while ($ocorrencia = $stmt->fetchObject()) {
             $ocorrencias[] = $ocorrencia;
