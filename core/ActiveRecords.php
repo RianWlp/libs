@@ -17,15 +17,11 @@ abstract class ActiveRecords
     {
         $id = trim($this::_primaryKey); // Obtém o nome da chave primária
         if (!empty($id)) {
-            $objectVars = get_object_vars($this); // Armazena as propriedades do objeto em uma variável
-            // return isset($objectVars[$id]) && $objectVars[$id]  ? $this->update($this->connect)  : $this->insert($this->connect);
+            // Armazena as propriedades do objeto em uma variável
+            $objectVars = get_object_vars($this);
+
             return isset($objectVars[$id]) && $objectVars[$id]  ? $this->update()  : $this->insert();
         }
-
-        // $id = trim($this::_primaryKey);
-        // if (!empty($id)) {
-        //     return get_object_vars($this)[$id] ? $this->update($this->connect) : $this->insert($this->connect);
-        // }
     }
 
     private function executeSQL($stmt): void
@@ -105,7 +101,6 @@ abstract class ActiveRecords
             }
             $stmt->bindValue(":$column", $vars[$column]);
         }
-
         self::executeSQL($stmt);
     }
 
@@ -132,40 +127,6 @@ abstract class ActiveRecords
         }
 
         return $ocorrencias;
-    }
-
-    public function loadAll()
-    {
-        $tabela = $this::_tableName;
-
-        $sql = "SELECT * FROM $tabela";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->execute();
-
-        $ocorrencias = null;
-        while ($ocorrencia = $stmt->fetchObject()) {
-            $ocorrencias[] = $ocorrencia;
-        }
-
-        return (object)$ocorrencias;
-    }
-
-    // public function load(DbConnect $connect)
-    // Esse metodo acho que vai ser removido
-    public function load(int $id)
-    {
-        $id     = $this::_primaryKey;
-        $tabela = $this::_tableName;
-
-        $var = get_object_vars($this)[$id];
-        $sql = "SELECT * FROM $tabela WHERE $id = :$id";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$id", $var);
-
-        $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_OBJ);
     }
 
     public function getAllByKeys(array $filters): array
@@ -272,30 +233,13 @@ abstract class ActiveRecords
         return $stmt->fetch(\PDO::FETCH_OBJ);
     }
 
-    public function softDelete()
+    public function softDeleteBy(string $column, string $value): void
     {
-        $id     = $this::_primaryKey;
-        $tabela = $this::_tableName;
+        $tabela = $this::_tableName; // Nome da tabela definido na classe
 
-        $var = get_object_vars($this)[$id];
-        $sql = "UPDATE $tabela SET dt_deletado = CURRENT_TIMESTAMP WHERE :$id = $id";
+        $sql = "UPDATE $tabela SET dt_deletado = CURRENT_TIMESTAMP WHERE :$column = $value";
         $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$id", $var);
-
-        self::executeSQL($stmt);
-    }
-
-    public function hardDelete()
-    {
-        $id     = $this::_primaryKey;
-        $tabela = $this::_tableName;
-
-        $var = get_object_vars($this)[$id];
-
-        $sql = "DELETE FROM $tabela WHERE :$id = $id;";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$id", $var);
+        $stmt->bindValue(":$column", $value);
 
         self::executeSQL($stmt);
     }
@@ -316,12 +260,12 @@ abstract class ActiveRecords
         $sql = "DELETE FROM $table WHERE $column = :value";
 
         $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(':value', $value);
+        $stmt->bindValue(":$column", $value);
 
         self::executeSQL($stmt);
     }
 
-    public function getLastId()
+    public function getLastId(): ?int
     {
         // Isso aqui vou ter que dar uma olhada
         $id     = $this::_primaryKey;
@@ -346,5 +290,27 @@ abstract class ActiveRecords
 
         // Retorna true se o registro existe, false caso contrário
         return (bool) $stmt->fetchColumn();
+    }
+
+    public function beginTransaction(): void
+    {
+        $this->connect->getConnect()->beginTransaction();
+    }
+
+    public function commit(): void
+    {
+        $this->connect->getConnect()->commit();
+    }
+
+    public function rollback(): void
+    {
+        $this->connect->getConnect()->rollBack();
+    }
+
+    public function abort(): void
+    {
+        if ($this->connect->getConnect()->inTransaction()) {
+            $this->connect->getConnect()->rollBack();
+        }
     }
 }
