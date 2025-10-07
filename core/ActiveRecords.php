@@ -3,9 +3,12 @@
 namespace RianWlp\Libs\core;
 
 use RianWlp\Db\DbConnect;
+use stdClass;
 
 abstract class ActiveRecords
 {
+    protected const PRIMARY_KEY = '';
+    protected const TABLE_NAME = '';
     protected $connect;
 
     public function __construct(DbConnect $connect)
@@ -15,12 +18,12 @@ abstract class ActiveRecords
 
     public function store()
     {
-        $id = trim($this::_primaryKey); // Obtém o nome da chave primária
+        $id = trim($this::PRIMARY_KEY); // Obtém o nome da chave primária
         if (!empty($id)) {
             // Armazena as propriedades do objeto em uma variável
             $objectVars = get_object_vars($this);
 
-            return isset($objectVars[$id]) && $objectVars[$id]  ? $this->update()  : $this->insert();
+            return isset($objectVars[$id]) && $objectVars[$id] ? $this->update()  : $this->insert();
         }
     }
 
@@ -31,7 +34,7 @@ abstract class ActiveRecords
 
     private function insert()
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         $firtArguments   = null;
         $secordArguments = null;
@@ -66,8 +69,8 @@ abstract class ActiveRecords
 
     private function update()
     {
-        $id     = $this::_primaryKey;
-        $tabela = $this::_tableName;
+        $id     = $this::PRIMARY_KEY;
+        $tabela = $this::TABLE_NAME;
 
         $arguments = null;
         $vars      = self::getVars();
@@ -112,9 +115,9 @@ abstract class ActiveRecords
         return $vars;
     }
 
-    public function getAll()
+    public function getAll(): ?array
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         $sql = "SELECT * FROM $tabela";
 
@@ -131,7 +134,7 @@ abstract class ActiveRecords
 
     public function getAllByKeys(array $filters): array
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         // Constrói a cláusula WHERE dinamicamente com base no array de filtros
         $whereClauses = [];
@@ -160,9 +163,9 @@ abstract class ActiveRecords
         return $ocorrencias;
     }
 
-    public function getByKeys(array $filters)
+    public function getByKeys(array $filters): ?stdClass
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         // Constrói a cláusula WHERE dinamicamente com base no array de filtros
         $whereClauses = [];
@@ -187,9 +190,9 @@ abstract class ActiveRecords
         return $stmt->fetchObject() ?: null;
     }
 
-    public function getAllByKey(string $key, string $value)
+    public function getAllByKey(string $key, string $value): ?array
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         $sql = "SELECT * FROM $tabela WHERE $key = :value";
 
@@ -209,7 +212,7 @@ abstract class ActiveRecords
 
     public function getByKey(string $key, string $value)
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         $sql = "SELECT * FROM $tabela WHERE $key = :$key LIMIT 1;";
 
@@ -220,9 +223,9 @@ abstract class ActiveRecords
         return $stmt->fetch(\PDO::FETCH_OBJ);
     }
 
-    public function getById(int $id)
+    public function getById(int $id): stdClass
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         $sql = "SELECT * FROM $tabela WHERE id = :id";
 
@@ -235,7 +238,7 @@ abstract class ActiveRecords
 
     public function softDeleteBy(string $column, string $value): void
     {
-        $tabela = $this::_tableName; // Nome da tabela definido na classe
+        $tabela = $this::TABLE_NAME; // Nome da tabela definido na classe
 
         $sql = "UPDATE $tabela SET dt_deletado = CURRENT_TIMESTAMP WHERE :$column = $value";
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -244,9 +247,9 @@ abstract class ActiveRecords
         self::executeSQL($stmt);
     }
 
-    public function hardDeleteAll()
+    public function hardDeleteAll(): void
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         $sql = "DELETE FROM $tabela;";
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -256,7 +259,7 @@ abstract class ActiveRecords
 
     public function hardDeleteBy(string $column, $value): void
     {
-        $table = $this::_tableName; // Nome da tabela definido na classe
+        $table = $this::TABLE_NAME; // Nome da tabela definido na classe
         $sql = "DELETE FROM $table WHERE $column = :value";
 
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -268,8 +271,8 @@ abstract class ActiveRecords
     public function getLastId(): ?int
     {
         // Isso aqui vou ter que dar uma olhada
-        $id     = $this::_primaryKey;
-        $tabela = $this::_tableName;
+        $id     = $this::PRIMARY_KEY;
+        $tabela = $this::TABLE_NAME;
 
         $sql = "SELECT MAX($id) FROM $tabela;";
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -280,7 +283,7 @@ abstract class ActiveRecords
 
     public function exists(string $key, string $value): bool
     {
-        $tabela = $this::_tableName;
+        $tabela = $this::TABLE_NAME;
 
         $sql = "SELECT $key FROM $tabela WHERE $key = :$key LIMIT 1;";
         $stmt = $this->connect->getConnect()->prepare($sql);
