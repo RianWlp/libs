@@ -7,8 +7,9 @@ use stdClass;
 
 abstract class ActiveRecords
 {
-    protected const PRIMARY_KEY = '';
-    protected const TABLE_NAME = '';
+    abstract protected static string $primary_key;
+    abstract protected static string $table_name;
+
     protected $connect;
 
     public function __construct(DbConnect $connect)
@@ -18,7 +19,7 @@ abstract class ActiveRecords
 
     public function store()
     {
-        $id = trim($this::PRIMARY_KEY); // Obtém o nome da chave primária
+        $id = trim($this->primary_key); // Obtém o nome da chave primária
         if (!empty($id)) {
             // Armazena as propriedades do objeto em uma variável
             $objectVars = get_object_vars($this);
@@ -34,7 +35,7 @@ abstract class ActiveRecords
 
     private function insert()
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         $firtArguments   = null;
         $secordArguments = null;
@@ -69,8 +70,8 @@ abstract class ActiveRecords
 
     private function update()
     {
-        $id     = $this::PRIMARY_KEY;
-        $tabela = $this::TABLE_NAME;
+        $id     = $this->primary_key;
+        $tabela = $this->table_name;
 
         $arguments = null;
         $vars      = self::getVars();
@@ -117,7 +118,7 @@ abstract class ActiveRecords
 
     public function getAll(): ?array
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         $sql = "SELECT * FROM $tabela";
 
@@ -134,7 +135,7 @@ abstract class ActiveRecords
 
     public function getAllByKeys(array $filters): array
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         // Constrói a cláusula WHERE dinamicamente com base no array de filtros
         $whereClauses = [];
@@ -165,7 +166,7 @@ abstract class ActiveRecords
 
     public function getByKeys(array $filters): ?stdClass
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         // Constrói a cláusula WHERE dinamicamente com base no array de filtros
         $whereClauses = [];
@@ -192,7 +193,7 @@ abstract class ActiveRecords
 
     public function getAllByKey(string $key, string $value): ?array
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         $sql = "SELECT * FROM $tabela WHERE $key = :value";
 
@@ -212,7 +213,7 @@ abstract class ActiveRecords
 
     public function getByKey(string $key, string $value)
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         $sql = "SELECT * FROM $tabela WHERE $key = :$key LIMIT 1;";
 
@@ -225,7 +226,7 @@ abstract class ActiveRecords
 
     public function getById(int $id): stdClass
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         $sql = "SELECT * FROM $tabela WHERE id = :id";
 
@@ -238,7 +239,7 @@ abstract class ActiveRecords
 
     public function softDeleteBy(string $column, string $value): void
     {
-        $tabela = $this::TABLE_NAME; // Nome da tabela definido na classe
+        $tabela = $this->table_name; // Nome da tabela definido na classe
 
         $sql = "UPDATE $tabela SET dt_deletado = CURRENT_TIMESTAMP WHERE :$column = $value";
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -249,7 +250,7 @@ abstract class ActiveRecords
 
     public function hardDeleteAll(): void
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         $sql = "DELETE FROM $tabela;";
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -259,7 +260,7 @@ abstract class ActiveRecords
 
     public function hardDeleteBy(string $column, $value): void
     {
-        $table = $this::TABLE_NAME; // Nome da tabela definido na classe
+        $table = $this->table_name; // Nome da tabela definido na classe
         $sql = "DELETE FROM $table WHERE $column = :value";
 
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -271,8 +272,8 @@ abstract class ActiveRecords
     public function getLastId(): ?int
     {
         // Isso aqui vou ter que dar uma olhada
-        $id     = $this::PRIMARY_KEY;
-        $tabela = $this::TABLE_NAME;
+        $id     = $this->primary_key;
+        $tabela = $this->table_name;
 
         $sql = "SELECT MAX($id) FROM $tabela;";
         $stmt = $this->connect->getConnect()->prepare($sql);
@@ -283,7 +284,7 @@ abstract class ActiveRecords
 
     public function exists(string $key, string $value): bool
     {
-        $tabela = $this::TABLE_NAME;
+        $tabela = $this->table_name;
 
         $sql = "SELECT $key FROM $tabela WHERE $key = :$key LIMIT 1;";
         $stmt = $this->connect->getConnect()->prepare($sql);
