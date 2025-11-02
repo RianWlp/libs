@@ -6,8 +6,8 @@ use RianWlp\Libs\core\Entidade;
 
 class Log extends Entidade
 {
-    const _primaryKey = 'id';
-    const _tableName  = 'logs';
+    // const PRIMARY_KEY = 'id';
+    // const TABLE_NAME  = 'logs';
 
     protected int     $id;
     protected ?int    $fk_usuario; // Acho que isso deveria ser uma instancia de Usuario
