@@ -1,6 +1,6 @@
 <?php
 
-namespace RianWlp\Libs\core;
+namespace RianWlp\Db;
 
 use PDO;
 use PDOStatement;
