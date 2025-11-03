@@ -2,7 +2,9 @@
 
 namespace RianWlp\Libs\core;
 
+use RianWlp\Db\DbConnectSingleton;
 use RianWlp\Db\DbConnectV2;
+use RianWlp\Libs\utils\DotEnv;
 use stdClass;
 
 class ActiveRecordsV2
@@ -10,9 +12,9 @@ class ActiveRecordsV2
     protected string $table_name;
     protected string $primary_key;
 
-    protected DbConnectV2 $connect;
+    protected $connect;
 
-    public function __construct(DbConnectV2 $connect)
+    public function __construct($connect)
     {
         $this->connect = $connect;
     }
@@ -69,8 +71,9 @@ class ActiveRecordsV2
         $arguments = null;
         $vars      = self::getVars();
 
-        if (!$vars['dt_atualizado']) {
-            $vars['dt_atualizado'] = date('Y-m-d H:i:s');
+        $updated_at = DotEnv::get('UPDATED_AT_FIELD');
+        if (DotEnv::get('UPDATED_AT_FIELD')) {
+            $vars[$updated_at] = date('Y-m-d H:i:s');
         }
 
         foreach ($vars as $key => $var) {
@@ -92,10 +95,11 @@ class ActiveRecordsV2
         foreach ($arguments as $key => $column) {
 
             $column = array_shift(explode(' = ', $column));
-            if ($column == 'dt_atualizado') {
-                $stmt->bindValue(":$column", date('Y-m-d H:i:s'));
-                continue;
-            }
+            // Acho que isso aqui nao precisa
+            // if ($column == 'dt_atualizado') {
+            //     $stmt->bindValue(":$column", date('Y-m-d H:i:s'));
+            //     continue;
+            // }
             $stmt->bindValue(":$column", $vars[$column]);
         }
         $stmt->execute();
