@@ -7,8 +7,8 @@ use stdClass;
 
 abstract class ActiveRecords
 {
-    abstract protected static string $primary_key;
-    abstract protected static string $table_name;
+    protected string $table_name;
+    protected string $primary_key;
 
     protected $connect;
 
