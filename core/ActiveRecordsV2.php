@@ -2,8 +2,6 @@
 
 namespace RianWlp\Libs\core;
 
-use RianWlp\Db\DbConnectSingleton;
-use RianWlp\Db\DbConnectV2;
 use RianWlp\Libs\utils\DotEnv;
 use stdClass;
 
@@ -19,21 +17,23 @@ class ActiveRecordsV2
         $this->connect = $connect;
     }
 
+    // Sei la, ta meio bosta esse metodo
     public function store()
     {
         $id = trim($this->primary_key); // Obtém o nome da chave primária
         if (!empty($id)) {
             // Armazena as propriedades do objeto em uma variável
             $obj_vars = get_object_vars($this);
-
             return isset($obj_vars[$id]) && $obj_vars[$id] ? $this->update()  : $this->insert();
         }
     }
 
-    private function insert()
+    private function insert(): bool
     {
         $firt_arguments   = null;
         $secord_arguments = null;
+
+        // Eu poderia primeiro limpar e depois interar
         $vars             = self::getVars();
 
         foreach ($vars as $key => $var) {
@@ -58,12 +58,10 @@ class ActiveRecordsV2
             $column = array_shift(explode(' = ', $column));
             $stmt->bindValue(":$column", (string)$vars[$column]);
         }
-
-        $stmt->execute();
-        return $this->getLastId();
+        return $stmt->execute();
     }
 
-    private function update()
+    private function update(): bool
     {
         $id     = $this->primary_key;
         $tabela = $this->table_name;
@@ -95,20 +93,17 @@ class ActiveRecordsV2
         foreach ($arguments as $key => $column) {
 
             $column = array_shift(explode(' = ', $column));
-            // Acho que isso aqui nao precisa
-            // if ($column == 'dt_atualizado') {
-            //     $stmt->bindValue(":$column", date('Y-m-d H:i:s'));
-            //     continue;
-            // }
             $stmt->bindValue(":$column", $vars[$column]);
         }
-        $stmt->execute();
+        return $stmt->execute();
     }
 
     private function getVars(): array
     {
         $vars = get_object_vars($this);
         unset($vars['connect']);
+        unset($vars['table_name']);
+        unset($vars['primary_key']);
 
         return $vars;
     }
@@ -207,7 +202,7 @@ class ActiveRecordsV2
         return $ocorrencias;
     }
 
-    public function getByKey(string $key, string $value)
+    public function getByKey(string $key, string $value): stdClass
     {
         $tabela = $this->table_name;
 
@@ -233,25 +228,30 @@ class ActiveRecordsV2
         return $stmt->fetch(\PDO::FETCH_OBJ);
     }
 
-    public function softDeleteBy(string $column, string $value): void
+    public function softDeleteBy(string $column, string $value): bool
     {
         $tabela = $this->table_name; // Nome da tabela definido na classe
 
-        $sql = "UPDATE $tabela SET dt_deletado = CURRENT_TIMESTAMP WHERE :$column = $value";
+        $deleted_at = DotEnv::get('DELETED_AT_FIELD');
+        if (DotEnv::get('DELETED_AT_FIELD')) {
+            $vars[$deleted_at] = date('Y-m-d H:i:s');
+        }
+
+        $sql = "UPDATE $tabela SET $deleted_at = CURRENT_TIMESTAMP WHERE :$column = $value";
         $stmt = $this->connect->getConnect()->prepare($sql);
         $stmt->bindValue(":$column", $value);
 
-        $stmt->execute();
+        return $stmt->execute();
     }
 
-    public function hardDeleteAll(): void
+    public function hardDeleteAll(): bool
     {
         $tabela = $this->table_name;
 
         $sql = "DELETE FROM $tabela;";
         $stmt = $this->connect->getConnect()->prepare($sql);
 
-        $stmt->execute();
+        return $stmt->execute();
     }
 
     public function hardDeleteBy(string $column, $value): void
