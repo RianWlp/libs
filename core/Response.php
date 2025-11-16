@@ -18,14 +18,6 @@ class Response
         http_response_code($statusCode);
     }
 
-    // Envia uma resposta JSON
-    // public static function sendJsonResponse($data, int $statusCode = 200)
-    // {
-    //     self::setJsonContentType();
-    //     self::setHttpStatus($statusCode);
-    //     echo json_encode($data);
-    // }
-
     public static function sendJsonResponse($data, int $statusCode = 200, string $message = ''): void
     {
         // Defina os cabeçalhos apenas uma vez
@@ -36,17 +28,9 @@ class Response
         header('Content-Type: application/json');
         http_response_code($statusCode);
 
-        // Tratamento para requisições OPTIONS (preflight)
-        // if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        //     http_response_code(204);
-        //     exit;
-        // }
-
-        // Define o código do status HTTP
-
         // Monta a resposta JSON
         $response = [
-            'status'  => $statusCode,
+            'status'  => $statusCode, // Define o código do status HTTP
             'message' => $message,
             'data'    => $data,
         ];
@@ -88,22 +72,33 @@ class Response
         exit;
     }
 
+    public static function sendJsonResponse3($data = null, int $statusCode = 200, string $message = ''): void
+    {
+        // CORS — versão correta para evitar conflitos
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        header('Content-Type: application/json; charset=utf-8');
 
-    // public static function sendJsonResponse($data, int $statusCode = 200, string $message = ''): void
-    // {
-    //     header('Access-Control-Allow-Origin: *');
-    //     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    //     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-    //     header('Access-Control-Allow-Credentials: true');
-    //     header('Content-Type: application/json');
-    //     http_response_code($statusCode);  // Defina o código do status HTTP
+        http_response_code($statusCode);
 
-    //     $response = [
-    //         'status'  => $statusCode,
-    //         'message' => $message,
-    //         'data'    => $data
-    //     ];
-    //     echo json_encode($response);
-    //     exit();  // Finaliza a execução para garantir que a resposta seja enviada corretamente
-    // }
+        $success = $statusCode >= 200 && $statusCode < 300;
+
+        $response = [
+            'success' => $success,
+        ];
+
+        if ($message !== '') {
+            $response['message'] = $message;
+        }
+
+        if ($success) {
+            $response['data'] = $data;
+        } else {
+            $response['error'] = $data; // detalhes da falha
+        }
+
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
 }
