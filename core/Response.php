@@ -72,8 +72,9 @@ class Response
         exit;
     }
 
-    public static function sendJsonResponse3($data = null, int $statusCode = 200, string $message = ''): void
+    public static function sendJsonResponse3($data = null, int $statusCode = 200, string $message = '')
     {
+        // nao sei se nao vai dar pau nisso
         // CORS — versão correta para evitar conflitos
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -98,7 +99,6 @@ class Response
             $response['error'] = $data; // detalhes da falha
         }
 
-        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        exit;
+        return json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }
