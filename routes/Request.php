@@ -27,7 +27,8 @@ class Request
         }
     }
 
-    public function getData () {
+    public function getData()
+    {
         return $this->data;
     }
 
@@ -46,7 +47,6 @@ class Request
             case 'get':
                 $this->data = array_merge($this->data, $_GET);
                 break;
-            // case 'head':
         }
     }
 

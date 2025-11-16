@@ -8,6 +8,7 @@ class RouterCollection
     protected $routes_get    = [];
     protected $routes_put    = [];
     protected $routes_delete = [];
+    protected $routes_patch  = [];
     protected $route_names   = [];
 
     public function add($request_type, $pattern, $callback, $namespace, $isAuthenticated)
@@ -62,7 +63,6 @@ class RouterCollection
 
     protected function toMap($pattern)
     {
-
         $result = [];
 
         $needles = ['{', '[', '(', "\\"];
@@ -157,7 +157,7 @@ class RouterCollection
     {
         $pattern_sent = $this->parseUri($pattern_sent);
 
-        foreach ($this->routes_put as $pattern => $callback) {
+        foreach ($this->routes_patch as $pattern => $callback) {
 
             if (preg_match($pattern, $pattern_sent, $pieces)) {
 
@@ -186,22 +186,77 @@ class RouterCollection
         return implode('/', array_filter(explode('/', $uri)));
     }
 
-    protected function definePattern($pattern)
+    protected function definePattern(string $pattern): string
     {
-        $pattern = implode('/', array_filter(explode('/', $pattern)));
-        $pattern = '/^' . str_replace('/', '\/', $pattern) . '$/';
+        // Remove barras duplicadas
+        $pattern = preg_replace('#/{2,}#', '/', $pattern);
+        $pattern = trim($pattern, '/');
 
-        if (preg_match("/\{[A-Za-z0-9\_\-]{1,}\}/", $pattern)) {
-            $pattern = preg_replace("/\{[A-Za-z0-9\_\-]{1,}\}/", "[A-Za-z0-9]{1,}", $pattern);
+        // Quebra path e query string
+        $parts = explode('?', $pattern, 2);
+        $path = $parts[0];
+        $query = $parts[1] ?? '';
+
+        // ---------------------------
+        // 1. Trata parâmetros do PATH
+        // ---------------------------
+
+        // {param}
+        $path = preg_replace(
+            '/\{([a-zA-Z0-9_-]+)\}/',
+            '(?P<$1>[A-Za-z0-9\-_]+)',
+            $path
+        );
+
+        // {param:regex}
+        $path = preg_replace(
+            '/\{([a-zA-Z0-9_-]+):([^}]+)\}/',
+            '(?P<$1>$2)',
+            $path
+        );
+
+        // {param?} (opcional)
+        $path = preg_replace(
+            '/\{([a-zA-Z0-9_-]+)\?\}/',
+            '(?P<$1>[A-Za-z0-9\-_]+)?',
+            $path
+        );
+
+        // ---------------------------
+        // 2. Trata parâmetros da QUERY
+        // ---------------------------
+        if ($query) {
+
+            // Ex: id={id}&tipo={tipo}
+            $query = preg_replace(
+                '/=\\{([a-zA-Z0-9_-]+)\}/',
+                '=(?P<$1>[A-Za-z0-9\-_]+)',
+                $query
+            );
+
+            $query = preg_replace(
+                '/=\\{([a-zA-Z0-9_-]+):([^}]+)\}/',
+                '=(?P<$1>$2)',
+                $query
+            );
+
+            $query = preg_replace(
+                '/=\\{([a-zA-Z0-9_-]+)\?\}/',
+                '=(?P<$1>[A-Za-z0-9\-_]+)?',
+                $query
+            );
+
+            $pattern = '^' . $path . '\?' . $query . '$';
+        } else {
+            $pattern = '^' . $path . '$';
         }
 
-        return $pattern;
+        return '#' . $pattern . '#';
     }
 
     public function convert($pattern, $params)
     {
         if (!is_array($params)) {
-
             $params = array($params);
         }
 
@@ -233,13 +288,14 @@ class RouterCollection
 
     protected function addPost($pattern, $callback, $namespace, $isAuthenticated)
     {
+        $settings = [];
         if (is_array($pattern)) {
-
             $settings = $this->parsePattern($pattern);
             $pattern  = $settings['set'];
-        } else {
+        }
 
-            $settings = [];
+        if (empty($settings['namespace'])) {
+            $settings['namespace'] = $namespace;
         }
 
         $values = $this->toMap($pattern);
@@ -247,7 +303,7 @@ class RouterCollection
         $this->routes_post[$this->definePattern($pattern)] = [
             'callback'        => $callback,
             'values'          => $values,
-            'namespace'       => $namespace,
+            'namespace'       => $settings['namespace'] ?? null,
             'isAuthenticated' => $isAuthenticated
         ];
 
@@ -260,13 +316,14 @@ class RouterCollection
 
     protected function addGet($pattern, $callback, $namespace, $isAuthenticated)
     {
+        $settings = [];
         if (is_array($pattern)) {
-
             $settings = $this->parsePattern($pattern);
             $pattern  = $settings['set'];
-        } else {
+        }
 
-            $settings = [];
+        if (empty($settings['namespace'])) {
+            $settings['namespace'] = $namespace;
         }
 
         $values = $this->toMap($pattern);
@@ -274,7 +331,7 @@ class RouterCollection
         $this->routes_get[$this->definePattern($pattern)] = [
             'callback'  => $callback,
             'values'    => $values,
-            'namespace' => $namespace,
+            'namespace' => $settings['namespace'] ?? null,
             'isAuthenticated' => $isAuthenticated
         ];
 
@@ -288,13 +345,14 @@ class RouterCollection
     // Eu apenas copiei entao pode dar algum problema
     protected function addPatch($pattern, $callback, $namespace, $isAuthenticated)
     {
+        $settings = [];
         if (is_array($pattern)) {
-
             $settings = $this->parsePattern($pattern);
             $pattern  = $settings['set'];
-        } else {
+        }
 
-            $settings = [];
+        if (empty($settings['namespace'])) {
+            $settings['namespace'] = $namespace;
         }
 
         $values = $this->toMap($pattern);
@@ -313,13 +371,14 @@ class RouterCollection
 
     protected function addPut($pattern, $callback, $namespace, $isAuthenticated)
     {
+        $settings = [];
         if (is_array($pattern)) {
-
             $settings = $this->parsePattern($pattern);
             $pattern  = $settings['set'];
-        } else {
+        }
 
-            $settings = [];
+        if (empty($settings['namespace'])) {
+            $settings['namespace'] = $namespace;
         }
 
         $values = $this->toMap($pattern);
@@ -338,26 +397,40 @@ class RouterCollection
 
     protected function addDelete($pattern, $callback, $namespace, $isAuthenticated)
     {
+        $settings = [];
         if (is_array($pattern)) {
-
             $settings = $this->parsePattern($pattern);
             $pattern  = $settings['set'];
-        } else {
+        }
 
-            $settings = [];
+        if (empty($settings['namespace'])) {
+            $settings['namespace'] = $namespace;
         }
 
         $values = $this->toMap($pattern);
 
         $this->routes_delete[$this->definePattern($pattern)] = [
-            'callback' => $callback,
-            'values' => $values,
-            'namespace' => $settings['namespace'] ?? null,
+            'callback'        => $callback,
+            'values'          => $values,
+            'namespace'       => $settings['namespace'] ?? null,
             'isAuthenticated' => $isAuthenticated
         ];
+
         if (isset($settings['as'])) {
             $this->route_names[$settings['as']] = $pattern;
         }
         return $this;
+    }
+
+    protected function definePatternOLD($pattern)
+    {
+        $pattern = implode('/', array_filter(explode('/', $pattern)));
+        $pattern = '/^' . str_replace('/', '\/', $pattern) . '$/';
+
+        if (preg_match("/\{[A-Za-z0-9\_\-]{1,}\}/", $pattern)) {
+            $pattern = preg_replace("/\{[A-Za-z0-9\_\-]{1,}\}/", "[A-Za-z0-9]{1,}", $pattern);
+        }
+
+        return $pattern;
     }
 }
