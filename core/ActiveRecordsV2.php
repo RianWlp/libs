@@ -17,84 +17,85 @@ class ActiveRecordsV2
         $this->connect = $connect;
     }
 
-    // Sei la, ta meio bosta esse metodo
     public function store()
     {
-        $id = trim($this->primary_key); // Obtém o nome da chave primária
-        if (!empty($id)) {
-            // Armazena as propriedades do objeto em uma variável
-            $obj_vars = get_object_vars($this);
-            return isset($obj_vars[$id]) && $obj_vars[$id] ? $this->update()  : $this->insert();
-        }
+        $primary_key = trim($this->primary_key);
+
+        // if ($primary_key === '') {
+        //     return null; // Ou lance uma exceção, se fizer sentido
+        // }
+
+        // Verifica se a propriedade da chave primária existe e tem valor
+        $id = $this->$primary_key ?? null;
+
+        return $id ? $this->update() : $this->insert();
     }
 
     private function insert(): bool
     {
-        $firt_arguments   = null;
-        $secord_arguments = null;
-
-        // Eu poderia primeiro limpar e depois interar
-        $vars             = self::getVars();
-
-        foreach ($vars as $key => $var) {
-
-            if (!$var) {
-                continue;
-            }
-            $firt_arguments   .= "$key,";
-            $secord_arguments .= ":$key,";
+        $vars = self::getVars();
+        if (empty($vars)) {
+            throw new \Exception('Nenhum dado disponível para inserção!');
         }
 
-        $firt_arguments   = trim($firt_arguments, ',');
-        $secord_arguments = trim($secord_arguments, ',');
+        $columns      = array_keys($vars);
+        $placeholders = array_map(fn($col) => ":$col", $columns);
 
-        $sql  = "INSERT INTO {$this->table_name} ($firt_arguments) VALUES ($secord_arguments)";
+        $columns_list      = implode(',', $columns);
+        $placeholders_list = implode(',', $placeholders);
+
+        $sql  = "INSERT INTO {$this->table_name} ($columns_list) VALUES ($placeholders_list)";
         $stmt = $this->connect->getConnect()->prepare($sql);
 
-        $firt_arguments = explode(',', $firt_arguments);
-
-        foreach ($firt_arguments as $key => $column) {
-
-            $column = array_shift(explode(' = ', $column));
-            $stmt->bindValue(":$column", (string)$vars[$column]);
+        foreach ($columns as $column) {
+            $stmt->bindValue(":$column", $vars[$column]);
         }
+
         return $stmt->execute();
     }
 
     private function update(): bool
     {
-        $id     = $this->primary_key;
-        $tabela = $this->table_name;
+        $id_field = $this->primary_key;
+        $table   = $this->table_name;
+        $vars    = self::getVars();
 
-        $arguments = null;
-        $vars      = self::getVars();
-
-        $updated_at = DotEnv::get('UPDATED_AT_FIELD');
-        if (DotEnv::get('UPDATED_AT_FIELD')) {
-            $vars[$updated_at] = date('Y-m-d H:i:s');
+        if (empty($vars[$id_field])) {
+            throw new \Exception("Chave primária '$id_field' não definida para UPDATE!");
         }
 
-        foreach ($vars as $key => $var) {
-
-            if ((!$var) || ($key == $id)) {
-                continue;
-            }
-            $arguments .= "$key = :$key,";
+        // Adiciona campo updated_at se configurado
+        $updated_at_field = DotEnv::get('UPDATED_AT_FIELD');
+        if ($updated_at_field) {
+            $vars[$updated_at_field] = date('Y-m-d H:i:s');
         }
-        $arguments = trim($arguments, ',');
 
-        $sql = "UPDATE $tabela SET $arguments WHERE $id = :$id;";
+        // Remove ID da lista de atualização
+        $idValue = $vars[$id_field];
+        unset($vars[$id_field]);
 
-        $arguments = $arguments . ',id = :id';
+        // Gera pares key = :key
+        $set_clauses = [];
+        foreach ($vars as $key => $value) {
+            $set_clauses[] = "$key = :$key";
+        }
 
+        if (empty($set_clauses)) {
+            throw new \Exception('Nenhum campo para atualizar!');
+        }
+
+        $set_sql = implode(', ', $set_clauses);
+
+        $sql = "UPDATE {$table} SET {$set_sql} WHERE {$id_field} = :{$id_field};";
         $stmt = $this->connect->getConnect()->prepare($sql);
 
-        $arguments = explode(',', $arguments);
-        foreach ($arguments as $key => $column) {
-
-            $column = array_shift(explode(' = ', $column));
-            $stmt->bindValue(":$column", $vars[$column]);
+        // Bind dos valores
+        foreach ($vars as $key => $value) {
+            $stmt->bindValue(":$key", $value);
         }
+        // Bind do ID
+        $stmt->bindValue(":{$id_field}", $idValue);
+
         return $stmt->execute();
     }
 
@@ -104,6 +105,10 @@ class ActiveRecordsV2
         unset($vars['connect']);
         unset($vars['table_name']);
         unset($vars['primary_key']);
+
+        $vars = array_filter($vars, function ($var) {
+            return !empty($var);
+        });
 
         return $vars;
     }
@@ -215,17 +220,15 @@ class ActiveRecordsV2
         return $stmt->fetch(\PDO::FETCH_OBJ);
     }
 
-    public function getById(int $id): stdClass
+    public function getById(int $id): ?stdClass
     {
-        $tabela = $this->table_name;
-
-        $sql = "SELECT * FROM $tabela WHERE id = :id";
+        $sql = "SELECT * FROM {$this->table_name} WHERE id = :id";
 
         $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(':id', $id);
-
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_OBJ);
+
+        return $stmt->fetch(\PDO::FETCH_OBJ) ?: null;
     }
 
     public function softDeleteBy(string $column, string $value): bool
@@ -282,7 +285,7 @@ class ActiveRecordsV2
     {
         $tabela = $this->table_name;
 
-        $sql = "SELECT $key FROM $tabela WHERE $key = :$key LIMIT 1;";
+        $sql = "SELECT $key FROM $tabela WHERE $key = :$key;";
         $stmt = $this->connect->getConnect()->prepare($sql);
         $stmt->bindValue(":$key", $value);
 
@@ -290,5 +293,70 @@ class ActiveRecordsV2
 
         // Retorna true se o registro existe, false caso contrário
         return (bool) $stmt->fetchColumn();
+    }
+
+    private function insertOLD(): bool
+    {
+        $firt_arguments   = null;
+        $secord_arguments = null;
+
+        $vars = self::getVars();
+        foreach ($vars as $key => $var) {
+
+            $firt_arguments   .= "$key,";
+            $secord_arguments .= ":$key,";
+        }
+
+        $firt_arguments   = trim($firt_arguments, ',');
+        $secord_arguments = trim($secord_arguments, ',');
+
+        $sql  = "INSERT INTO {$this->table_name} ($firt_arguments) VALUES ($secord_arguments)";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+
+        $firt_arguments = explode(',', $firt_arguments);
+
+        foreach ($firt_arguments as $key => $column) {
+
+            $column = array_shift(explode(' = ', $column));
+            $stmt->bindValue(":$column", (string)$vars[$column]);
+        }
+        return $stmt->execute();
+    }
+
+    private function updateOLD(): bool
+    {
+        $id     = $this->primary_key;
+        $tabela = $this->table_name;
+
+        $arguments = null;
+        $vars      = self::getVars();
+
+        $updated_at = DotEnv::get('UPDATED_AT_FIELD');
+        if (DotEnv::get('UPDATED_AT_FIELD')) {
+            $vars[$updated_at] = date('Y-m-d H:i:s');
+        }
+
+        foreach ($vars as $key => $var) {
+
+            if ((!$var) || ($key == $id)) {
+                continue;
+            }
+            $arguments .= "$key = :$key,";
+        }
+        $arguments = trim($arguments, ',');
+
+        $sql = "UPDATE $tabela SET $arguments WHERE $id = :$id;";
+
+        $arguments = $arguments . ',id = :id';
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+
+        $arguments = explode(',', $arguments);
+        foreach ($arguments as $key => $column) {
+
+            $column = array_shift(explode(' = ', $column));
+            $stmt->bindValue(":$column", $vars[$column]);
+        }
+        return $stmt->execute();
     }
 }
