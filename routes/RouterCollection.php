@@ -84,6 +84,7 @@ class RouterCollection
                 }
             }
         }
+
         return count($result) > 0 ? $result : false;
     }
 
@@ -329,9 +330,9 @@ class RouterCollection
         $values = $this->toMap($pattern);
 
         $this->routes_get[$this->definePattern($pattern)] = [
-            'callback'  => $callback,
-            'values'    => $values,
-            'namespace' => $settings['namespace'] ?? null,
+            'callback'        => $callback,
+            'values'          => $values,
+            'namespace'       => $settings['namespace'] ?? null,
             'isAuthenticated' => $isAuthenticated
         ];
 
@@ -357,10 +358,10 @@ class RouterCollection
 
         $values = $this->toMap($pattern);
 
-        $this->routes_put[$this->definePattern($pattern)] = [
-            'callback' => $callback,
-            'values' => $values,
-            'namespace' => $settings['namespace'] ?? null,
+        $this->routes_patch[$this->definePattern($pattern)] = [
+            'callback'        => $callback,
+            'values'          => $values,
+            'namespace'       => $settings['namespace'] ?? null,
             'isAuthenticated' => $isAuthenticated
         ];
         if (isset($settings['as'])) {
@@ -384,9 +385,9 @@ class RouterCollection
         $values = $this->toMap($pattern);
 
         $this->routes_put[$this->definePattern($pattern)] = [
-            'callback' => $callback,
-            'values' => $values,
-            'namespace' => $settings['namespace'] ?? null,
+            'callback'        => $callback,
+            'values'          => $values,
+            'namespace'       => $settings['namespace'] ?? null,
             'isAuthenticated' => $isAuthenticated
         ];
         if (isset($settings['as'])) {
