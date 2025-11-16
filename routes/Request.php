@@ -34,11 +34,11 @@ class Request
 
     protected function setData()
     {
-        $inputs = file_get_contents('php://input');
-        if (json_validate(file_get_contents('php://input'))) {
-            $this->data = array_merge($this->data, json_decode($inputs, true));
-        }
+        $this->data = [];
 
+        $raw = file_get_contents('php://input');
+
+        // Se o método for POST ou GET, use $_POST e $_GET normalmente
         switch ($this->method) {
 
             case 'post':
@@ -48,7 +48,52 @@ class Request
                 $this->data = array_merge($this->data, $_GET);
                 break;
         }
+
+        // Se houver corpo (PUT, PATCH, DELETE também caem aqui)
+        if (!empty($raw)) {
+
+            // 1. Tenta decodificar como JSON
+            $json = json_decode($raw, true);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                // JSON válido
+                $this->data = array_merge($this->data, $json);
+                return;
+            }
+
+            // 2. Se não for JSON, tenta como query-string
+            parse_str($raw, $parsed);
+
+            if (!empty($parsed)) {
+                $this->data = array_merge($this->data, $parsed);
+                return;
+            }
+        }
     }
+
+
+    // protected function setData()
+    // {
+    //     $inputs = file_get_contents('php://input');
+    //     var_dump($inputs);
+    //     var_dump(json_decode($inputs));
+    //     die;
+    //     // if (json_validate(file_get_contents('php://input'))) {
+    //     $this->data = array_merge($this->data, json_decode($inputs, true));
+    //     // }
+
+    //     var_dump($this->data);
+    //     var_dump($inputs);
+    //     switch ($this->method) {
+
+    //         case 'post':
+    //             $this->data = array_merge($this->data, $_POST);
+    //             break;
+    //         case 'get':
+    //             $this->data = array_merge($this->data, $_GET);
+    //             break;
+    //     }
+    // }
 
     protected function setFiles()
     {
