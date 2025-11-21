@@ -7,6 +7,7 @@ use RianWlp\Libs\log\Log;
 
 class Dispatch
 {
+    // Ta feio
     public const DEFAULT_NAMESPACE = 'App\\controllers\\api\\';
 
     public function dispach($callback, $params = [], $namespace = self::DEFAULT_NAMESPACE, $is_authenticated = true)
