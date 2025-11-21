@@ -3,6 +3,7 @@
 namespace RianWlp\Libs\core;
 
 use RianWlp\Libs\utils\DotEnv;
+use Exception;
 use stdClass;
 
 class ActiveRecordsV2
@@ -12,22 +13,29 @@ class ActiveRecordsV2
 
     protected $connect;
 
-    public function __construct($connect)
+    public function __construct($connect, ?stdClass $attributes = null)
     {
         $this->connect = $connect;
+
+        if ($attributes !== null) {
+            foreach ($attributes as $key => $value) {
+                if (property_exists($this, $key)) {
+                    $this->$key = $value;
+                }
+            }
+        }
     }
 
-    public function store()
+    /**
+     * Salva o registro no banco de dados, realizando inserção ou atualização conforme necessário.
+     *
+     * @return bool Retorna true se a operação foi bem-sucedida, caso contrário, false.
+     */
+    public function store(): bool
     {
         $primary_key = trim($this->primary_key);
 
-        // if ($primary_key === '') {
-        //     return null; // Ou lance uma exceção, se fizer sentido
-        // }
-
-        // Verifica se a propriedade da chave primária existe e tem valor
         $id = $this->$primary_key ?? null;
-
         return $id ? $this->update() : $this->insert();
     }
 
@@ -35,7 +43,7 @@ class ActiveRecordsV2
     {
         $vars = self::getVars();
         if (empty($vars)) {
-            throw new \Exception('Nenhum dado disponível para inserção!');
+            return false;
         }
 
         $columns      = array_keys($vars);
@@ -57,21 +65,25 @@ class ActiveRecordsV2
     private function update(): bool
     {
         $id_field = $this->primary_key;
-        $table   = $this->table_name;
-        $vars    = self::getVars();
+        $table    = $this->table_name;
+        $vars     = self::getVars();
 
+        // Acho que isso nao faz muito sentido
         if (empty($vars[$id_field])) {
-            throw new \Exception("Chave primária '$id_field' não definida para UPDATE!");
+            return false;
+            // throw new Exception("Chave primária '$id_field' não definida para UPDATE!");
         }
 
+        // Acho que essa validacao nao deveria ser feita aqui
         // Adiciona campo updated_at se configurado
-        $updated_at_field = DotEnv::get('UPDATED_AT_FIELD');
-        if ($updated_at_field) {
-            $vars[$updated_at_field] = date('Y-m-d H:i:s');
+        // Essa validacao deve ficar dentro de uma classe boostrap (init da aplicacao)
+        $updated_at = DotEnv::get('UPDATED_AT_FIELD');
+        if (!$updated_at) {
+            throw new Exception('Campo updated_at não configurado no .env');
         }
 
         // Remove ID da lista de atualização
-        $idValue = $vars[$id_field];
+        $id_value = $vars[$id_field];
         unset($vars[$id_field]);
 
         // Gera pares key = :key
@@ -81,24 +93,261 @@ class ActiveRecordsV2
         }
 
         if (empty($set_clauses)) {
-            throw new \Exception('Nenhum campo para atualizar!');
+            return false;
+            // throw new Exception('Nenhum campo para atualizar!');
         }
 
         $set_sql = implode(', ', $set_clauses);
 
-        $sql = "UPDATE {$table} SET {$set_sql} WHERE {$id_field} = :{$id_field};";
+        $sql = "UPDATE {$table} SET $updated_at = CURRENT_TIMESTAMP {$set_sql} WHERE {$id_field} = :{$id_field};";
         $stmt = $this->connect->getConnect()->prepare($sql);
 
-        // Bind dos valores
+        $stmt->bindValue(":{$id_field}", $id_value);
         foreach ($vars as $key => $value) {
             $stmt->bindValue(":$key", $value);
         }
-        // Bind do ID
-        $stmt->bindValue(":{$id_field}", $idValue);
 
         return $stmt->execute();
     }
 
+    /**
+     * Retorna um array de objetos contendo todos os registros da tabela
+     *
+     * @return array|null
+     */
+    public function getAll(): ?array
+    {
+        $sql = "SELECT * FROM {$this->table_name};";
+        $stmt = $this->connect->getConnect()->query($sql);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_OBJ);
+
+        return array_map(fn($row) => $this->hydrate($row), $rows) ?: null;
+    }
+
+    // Nao funciona
+    public function getByKeys(array $filters): array
+    {
+        $table      = $this->table_name;
+        $conditions = [];
+        $params     = [];
+
+        foreach ($filters as $key => $value) {
+
+            // Se o valor for array → IN()
+            if (is_array($value)) {
+                $placeholders = [];
+                foreach ($value as $index => $v) {
+                    $paramKey = "{$key}_{$index}";
+                    $placeholders[] = ":{$paramKey}";
+                    $params[$paramKey] = $v;
+                }
+                $conditions[] = "{$key} IN (" . implode(",", $placeholders) . ")";
+                continue;
+            }
+
+            // Suporte a operadores: ["preco >", 5.00]
+            if (preg_match('/^(.+)\s*(>=|<=|<>|!=|=|>|<|LIKE)$/i', $key, $match)) {
+                $column = $match[1];
+                $operator = strtoupper($match[2]);
+                $conditions[] = "{$column} {$operator} :{$column}";
+                $params[$column] = $value;
+                continue;
+            }
+
+            // Operador padrão "="
+            $conditions[] = "{$key} = :{$key}";
+            $params[$key] = $value;
+        }
+
+        $where_sql = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
+        $sql = "SELECT * FROM {$table} {$where_sql}";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+
+        // Bind seguro
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":{$key}", $value);
+        }
+
+        $stmt->execute();
+        $rows = $stmt->fetchAll(\PDO::FETCH_OBJ);
+        return array_map(fn($row) => $this->hydrate($row), $rows) ?: null;
+    }
+
+    /**
+     * Retorna um array de objetos contendo os registros filtrados pela chave valor informada
+     *
+     * @param string $key   Coluna que vai ser filtrada
+     * @param string $value Valor que vai ser filtrado
+     *
+     * @return array|null
+     */
+    public function getByKey(string $key, string $value): ?array
+    {
+        $table = $this->table_name;
+
+        $sql = "SELECT * FROM $table WHERE $key = :$key;";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(":$key", $value);
+
+        $stmt->execute();
+        $rows = $stmt->fetchAll(\PDO::FETCH_OBJ);
+
+        return array_map(fn($row) => $this->hydrate($row), $rows) ?: null;
+    }
+
+    /**
+     * Retorna um objeto contendo o registro filtrado pelo ID informado
+     *
+     * @param int $id Id do registro
+     *
+     * @return static|null Retorna o objeto do registro ou null se não encontrado.
+     *
+     * @throws Exception Se nao for encontrado name retorna que o registro nao foi encontrato 404
+     */
+    public function getById(int $id): ?static
+    {
+        $sql = "SELECT * FROM {$this->table_name} WHERE id = :id";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $row = $stmt->fetch(\PDO::FETCH_OBJ);
+
+        // Acho que nao (e) muito certo ficar aqui
+        if (!$row) {
+            throw new Exception('Registro nao encontrado!', 404);
+        }
+
+        return $this->hydrate($row);
+    }
+
+    /**
+     * Realiza a exclusão lógica (soft delete) de um registro com base em uma coluna e valor específicos.
+     *
+     * @param string $column Nome da coluna para filtrar o registro.
+     * @param string $value  Valor da coluna para identificar o registro a ser excluído logicamente.
+     *
+     * @return bool Retorna true se a operação foi bem-sucedida, caso contrário, false.
+     *
+     * @throws Exception Se o campo deleted_at não estiver configurado no arquivo .env.
+     */
+    public function softDeleteBy(string $column, string $value): bool
+    {
+        $table = $this->table_name; // Nome da tabela definido na classe
+
+        $deleted_at = DotEnv::get('DELETED_AT_FIELD');
+        if (!$deleted_at) {
+            throw new Exception('Campo deleted_at não configurado no .env');
+        }
+
+        $sql = "UPDATE $table SET $deleted_at = CURRENT_TIMESTAMP WHERE :$column = $value;";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(":$column", $value);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Realiza a exclusão permanente (hard delete) de um registro
+     *
+     * @return bool Retorna true se a operação foi bem-sucedida, caso contrário, false.
+     */
+    public function hardDeleteAll(): bool
+    {
+        $table = $this->table_name;
+
+        $sql = "DELETE FROM $table;";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Realiza a exclusão permanente (hard delete) de um registro com base em uma coluna e valor específicos.
+     *
+     * @param string $column Nome da coluna para filtrar o registro.
+     * @param string $value  Valor da coluna para identificar o registro a ser excluído logicamente.
+     *
+     * @return bool Retorna true se a operação foi bem-sucedida, caso contrário, false.
+     */
+    public function hardDeleteBy(string $column, object $object): bool
+    {
+        $table = $this->table_name;
+        $sql = "DELETE FROM $table WHERE $column = :$column;";
+
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(":$column", $object->$column);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Retorna o ID do último registro inserido na tabela
+     *
+     * @return int Retorna um inteiro representando o ID do último registro.
+     */
+    public function getLastId(): int
+    {
+        // Isso aqui vou ter que dar uma olhada
+        $id    = $this->primary_key;
+        $table = $this->table_name;
+
+        $sql = "SELECT MAX($id) FROM $table;";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch(\PDO::FETCH_OBJ)->max;
+    }
+
+    /**
+     * Retorna o último registro inserido na tabela
+     *
+     * @return object|null Retorna o objeto do último registro ou null se não houver registros.
+     */
+    public function getLastRow(): ?static
+    {
+        $id    = $this->primary_key;
+        $table = $this->table_name;
+
+        $sql = "SELECT * FROM $table ORDER BY $id DESC LIMIT 1;";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->execute();
+
+        return $this->hydrate($stmt->fetch(\PDO::FETCH_OBJ));
+    }
+
+    /**
+     * Verifica se um registro existe com base em uma chave e valor específicos.
+     *
+     * @param string $key   Nome da coluna para filtrar o registro.
+     * @param string $value Valor da coluna para identificar o registro.
+     *
+     * @return object|null Retorna o objeto do registro se encontrado, caso contrário, null.
+     */
+    public function exists(string $key, string $value)
+    {
+        $table = $this->table_name;
+
+        $sql = "SELECT $key FROM $table WHERE $key = :$key;";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+        $stmt->bindValue(":$key", $value);
+
+        $stmt->execute();
+
+        return $this->hydrate($stmt->fetch(\PDO::FETCH_OBJ));
+    }
+
+    // ----------------------------- Metodos internos da classe
+
+    /**
+     * Busca e retorna as variáveis de instância do objeto atual, excluindo propriedades específicas.
+     *
+     * @return array
+     */
     private function getVars(): array
     {
         $vars = get_object_vars($this);
@@ -113,250 +362,25 @@ class ActiveRecordsV2
         return $vars;
     }
 
-    public function getAll(): ?array
+    /**
+     * Hidrata um objeto genérico em uma instância da classe atual.
+     *
+     * @param object|null $object Objeto genérico a ser hidratado.
+     *
+     * @return object|null Instância da classe atual ou null se o objeto for nulo.
+     */
+    private function hydrate(object|array|null $object): ?static
     {
-        $tabela = $this->table_name;
-
-        $sql = "SELECT * FROM $tabela";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->execute();
-
-        $ocorrencias = null;
-        while ($ocorrencia = $stmt->fetchObject()) {
-            $ocorrencias[] = $ocorrencia;
-        }
-        return $ocorrencias;
-    }
-
-    public function getAllByKeys(array $filters): array
-    {
-        $tabela = $this->table_name;
-
-        // Constrói a cláusula WHERE dinamicamente com base no array de filtros
-        $where_clauses = [];
-        foreach ($filters as $key => $value) {
-            $where_clauses[] = "$key = :$key";
+        // Se vier array, converte para objeto genérico
+        if (is_array($object)) {
+            $object = (object) $object;
         }
 
-        $whereSql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
-
-        $sql = "SELECT * FROM $tabela $whereSql";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-
-        // Associa os valores dinamicamente
-        foreach ($filters as $key => $value) {
-            $stmt->bindValue(":$key", $value);
+        if (!$object) {
+            return null;
         }
 
-        $stmt->execute();
-
-        $ocorrencias = [];
-        while ($ocorrencia = $stmt->fetchObject()) {
-            $ocorrencias[] = $ocorrencia;
-        }
-
-        return $ocorrencias;
-    }
-
-    public function getByKeys(array $filters): ?stdClass
-    {
-        $tabela = $this->table_name;
-
-        // Constrói a cláusula WHERE dinamicamente com base no array de filtros
-        $where_clauses = [];
-        foreach ($filters as $key => $value) {
-            $where_clauses[] = "$key = :$key";
-        }
-
-        $whereSql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
-
-        $sql = "SELECT * FROM $tabela $whereSql LIMIT 1"; // Adiciona LIMIT 1 para garantir apenas um registro
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-
-        // Associa os valores dinamicamente
-        foreach ($filters as $key => $value) {
-            $stmt->bindValue(":$key", $value);
-        }
-
-        $stmt->execute();
-
-        // Retorna apenas um único registro como objeto ou null se nenhum for encontrado
-        return $stmt->fetchObject() ?: null;
-    }
-
-    public function getAllByKey(string $key, string $value): ?array
-    {
-        $tabela = $this->table_name;
-
-        $sql = "SELECT * FROM $tabela WHERE $key = :value";
-
-        // Prepara e executa a consulta
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(':value', $value);
-        $stmt->execute();
-
-        // Busca os resultados e retorna como array
-        $ocorrencias = null;
-        while ($ocorrencia = $stmt->fetchObject()) {
-            $ocorrencias[] = $ocorrencia;
-        }
-
-        return $ocorrencias;
-    }
-
-    public function getByKey(string $key, string $value): stdClass
-    {
-        $tabela = $this->table_name;
-
-        $sql = "SELECT * FROM $tabela WHERE $key = :$key LIMIT 1;";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$key", $value);
-
-        $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_OBJ);
-    }
-
-    public function getById(int $id): ?stdClass
-    {
-        $sql = "SELECT * FROM {$this->table_name} WHERE id = :id";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetch(\PDO::FETCH_OBJ) ?: null;
-    }
-
-    public function softDeleteBy(string $column, string $value): bool
-    {
-        $tabela = $this->table_name; // Nome da tabela definido na classe
-
-        $deleted_at = DotEnv::get('DELETED_AT_FIELD');
-        if (DotEnv::get('DELETED_AT_FIELD')) {
-            $vars[$deleted_at] = date('Y-m-d H:i:s');
-        }
-
-        $sql = "UPDATE $tabela SET $deleted_at = CURRENT_TIMESTAMP WHERE :$column = $value";
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$column", $value);
-
-        return $stmt->execute();
-    }
-
-    public function hardDeleteAll(): bool
-    {
-        $tabela = $this->table_name;
-
-        $sql = "DELETE FROM $tabela;";
-        $stmt = $this->connect->getConnect()->prepare($sql);
-
-        return $stmt->execute();
-    }
-
-    public function hardDeleteBy(string $column, $value): void
-    {
-        $table = $this->table_name; // Nome da tabela definido na classe
-        $sql = "DELETE FROM $table WHERE $column = :value";
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$column", $value);
-
-        $stmt->execute();
-    }
-
-    public function getLastId(): ?int
-    {
-        // Isso aqui vou ter que dar uma olhada
-        $id     = $this->primary_key;
-        $tabela = $this->table_name;
-
-        $sql = "SELECT MAX($id) FROM $tabela;";
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->execute();
-
-        return $stmt->fetch(\PDO::FETCH_OBJ)->max;
-    }
-
-    public function exists(string $key, string $value): bool
-    {
-        $tabela = $this->table_name;
-
-        $sql = "SELECT $key FROM $tabela WHERE $key = :$key;";
-        $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$key", $value);
-
-        $stmt->execute();
-
-        // Retorna true se o registro existe, false caso contrário
-        return (bool) $stmt->fetchColumn();
-    }
-
-    private function insertOLD(): bool
-    {
-        $firt_arguments   = null;
-        $secord_arguments = null;
-
-        $vars = self::getVars();
-        foreach ($vars as $key => $var) {
-
-            $firt_arguments   .= "$key,";
-            $secord_arguments .= ":$key,";
-        }
-
-        $firt_arguments   = trim($firt_arguments, ',');
-        $secord_arguments = trim($secord_arguments, ',');
-
-        $sql  = "INSERT INTO {$this->table_name} ($firt_arguments) VALUES ($secord_arguments)";
-        $stmt = $this->connect->getConnect()->prepare($sql);
-
-        $firt_arguments = explode(',', $firt_arguments);
-
-        foreach ($firt_arguments as $key => $column) {
-
-            $column = array_shift(explode(' = ', $column));
-            $stmt->bindValue(":$column", (string)$vars[$column]);
-        }
-        return $stmt->execute();
-    }
-
-    private function updateOLD(): bool
-    {
-        $id     = $this->primary_key;
-        $tabela = $this->table_name;
-
-        $arguments = null;
-        $vars      = self::getVars();
-
-        $updated_at = DotEnv::get('UPDATED_AT_FIELD');
-        if (DotEnv::get('UPDATED_AT_FIELD')) {
-            $vars[$updated_at] = date('Y-m-d H:i:s');
-        }
-
-        foreach ($vars as $key => $var) {
-
-            if ((!$var) || ($key == $id)) {
-                continue;
-            }
-            $arguments .= "$key = :$key,";
-        }
-        $arguments = trim($arguments, ',');
-
-        $sql = "UPDATE $tabela SET $arguments WHERE $id = :$id;";
-
-        $arguments = $arguments . ',id = :id';
-
-        $stmt = $this->connect->getConnect()->prepare($sql);
-
-        $arguments = explode(',', $arguments);
-        foreach ($arguments as $key => $column) {
-
-            $column = array_shift(explode(' = ', $column));
-            $stmt->bindValue(":$column", $vars[$column]);
-        }
-        return $stmt->execute();
+        $class = get_called_class();
+        return new $class($this->connect, $object);
     }
 }
