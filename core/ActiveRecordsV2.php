@@ -13,6 +13,12 @@ class ActiveRecordsV2
 
     protected $connect;
 
+    /**
+     * Construtor da classe ActiveRecordsV2.
+     *
+     * @param mixed          $connect    Instância de conexão com o banco de dados.
+     * @param stdClass|null  $attributes Objeto contendo os atributos para inicializar a instância.
+     */
     public function __construct($connect, ?stdClass $attributes = null)
     {
         $this->connect = $connect;
@@ -99,7 +105,7 @@ class ActiveRecordsV2
 
         $set_sql = implode(', ', $set_clauses);
 
-        $sql = "UPDATE {$table} SET $updated_at = CURRENT_TIMESTAMP {$set_sql} WHERE {$id_field} = :{$id_field};";
+        $sql = "UPDATE {$table} SET $updated_at = CURRENT_TIMESTAMP, {$set_sql} WHERE {$id_field} = :{$id_field};";
         $stmt = $this->connect->getConnect()->prepare($sql);
 
         $stmt->bindValue(":{$id_field}", $id_value);
@@ -122,57 +128,80 @@ class ActiveRecordsV2
 
         $rows = $stmt->fetchAll(\PDO::FETCH_OBJ);
 
-        return array_map(fn($row) => $this->hydrate($row), $rows) ?: null;
+        return array_map(function ($row) {
+            return $this->hydrate($row);
+        }, $rows);
     }
 
-    // Nao funciona
-    public function getByKeys(array $filters): array
+    /**
+     * Retorna um array de objetos contendo os registros paginados
+     *
+     * @param integer $page  Página atual
+     * @param integer $limit Número de registros por página
+     *
+     * @return array|null
+     */
+    public function getAllPaginated(int $page = 1, int $limit = 10): array
     {
-        $table      = $this->table_name;
+        $page  = max(1, $page);
+        $limit = max(1, $limit);
+
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT * FROM {$this->table_name} LIMIT :limit OFFSET :offset";
+        $stmt = $this->connect->getConnect()->prepare($sql);
+
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_OBJ);
+
+        return array_map(function ($row) {
+            return $this->hydrate($row);
+        }, $rows);
+    }
+
+    public function getBy(array $filters): array
+    {
+        $table = $this->table_name;
+
+        if (empty($filters)) {
+            return [];
+        }
+
+        // Lista branca de colunas permitidas
+        // $allowedColumns = $this->allowedColumns ?? array_keys($filters);
+
         $conditions = [];
         $params     = [];
 
-        foreach ($filters as $key => $value) {
+        foreach ($filters as $column => $value) {
+            // if (!in_array($column, $allowedColumns, true)) {
+            //     throw new Exception("Coluna inválida: {$column}");
+            // }
 
-            // Se o valor for array → IN()
-            if (is_array($value)) {
-                $placeholders = [];
-                foreach ($value as $index => $v) {
-                    $paramKey = "{$key}_{$index}";
-                    $placeholders[] = ":{$paramKey}";
-                    $params[$paramKey] = $v;
-                }
-                $conditions[] = "{$key} IN (" . implode(",", $placeholders) . ")";
-                continue;
-            }
+            $param = ':' . $column;
 
-            // Suporte a operadores: ["preco >", 5.00]
-            if (preg_match('/^(.+)\s*(>=|<=|<>|!=|=|>|<|LIKE)$/i', $key, $match)) {
-                $column = $match[1];
-                $operator = strtoupper($match[2]);
-                $conditions[] = "{$column} {$operator} :{$column}";
-                $params[$column] = $value;
-                continue;
-            }
-
-            // Operador padrão "="
-            $conditions[] = "{$key} = :{$key}";
-            $params[$key] = $value;
+            $conditions[] = "{$column} = {$param}";
+            $params[$param] = $value;
         }
 
-        $where_sql = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
-        $sql = "SELECT * FROM {$table} {$where_sql}";
+        $where = implode(' AND ', $conditions);
+        $sql   = "SELECT * FROM {$table} WHERE {$where};";
 
         $stmt = $this->connect->getConnect()->prepare($sql);
 
-        // Bind seguro
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(":{$key}", $value);
+        foreach ($params as $param => $value) {
+            $stmt->bindValue($param, $value);
         }
 
         $stmt->execute();
+
         $rows = $stmt->fetchAll(\PDO::FETCH_OBJ);
-        return array_map(fn($row) => $this->hydrate($row), $rows) ?: null;
+
+        return array_map([$this, 'hydrate'], $rows);
     }
 
     /**
@@ -229,13 +258,13 @@ class ActiveRecordsV2
      * Realiza a exclusão lógica (soft delete) de um registro com base em uma coluna e valor específicos.
      *
      * @param string $column Nome da coluna para filtrar o registro.
-     * @param string $value  Valor da coluna para identificar o registro a ser excluído logicamente.
+     * @param object $object Objeto que tera a informacao capturada para realizar a operacao.
      *
      * @return bool Retorna true se a operação foi bem-sucedida, caso contrário, false.
      *
      * @throws Exception Se o campo deleted_at não estiver configurado no arquivo .env.
      */
-    public function softDeleteBy(string $column, string $value): bool
+    public function softDeleteBy(string $column, object $object): bool
     {
         $table = $this->table_name; // Nome da tabela definido na classe
 
@@ -244,9 +273,9 @@ class ActiveRecordsV2
             throw new Exception('Campo deleted_at não configurado no .env');
         }
 
-        $sql = "UPDATE $table SET $deleted_at = CURRENT_TIMESTAMP WHERE :$column = $value;";
+        $sql = "UPDATE $table SET $deleted_at = CURRENT_TIMESTAMP WHERE :$column = {$object->$column};";
         $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$column", $value);
+        $stmt->bindValue(":$column", $object->$column);
 
         return $stmt->execute();
     }
@@ -270,7 +299,7 @@ class ActiveRecordsV2
      * Realiza a exclusão permanente (hard delete) de um registro com base em uma coluna e valor específicos.
      *
      * @param string $column Nome da coluna para filtrar o registro.
-     * @param string $value  Valor da coluna para identificar o registro a ser excluído logicamente.
+     * @param object $object Objeto que tera a informacao capturada para realizar a operacao.
      *
      * @return bool Retorna true se a operação foi bem-sucedida, caso contrário, false.
      */
@@ -348,7 +377,7 @@ class ActiveRecordsV2
      *
      * @return array
      */
-    private function getVars(): array
+    protected function getVars(): array
     {
         $vars = get_object_vars($this);
         unset($vars['connect']);
