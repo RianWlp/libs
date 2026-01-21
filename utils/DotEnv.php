@@ -16,6 +16,7 @@ class DotEnv
         }
 
         foreach ($env as $key => $value) {
+            $_ENV[$key] = $value;
             self::put($key, $value);
         }
     }
