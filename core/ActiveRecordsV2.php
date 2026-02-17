@@ -77,16 +77,9 @@ class ActiveRecordsV2
         // Acho que isso nao faz muito sentido
         if (empty($vars[$id_field])) {
             return false;
-            // throw new Exception("Chave primária '$id_field' não definida para UPDATE!");
         }
 
-        // Acho que essa validacao nao deveria ser feita aqui
-        // Adiciona campo updated_at se configurado
-        // Essa validacao deve ficar dentro de uma classe boostrap (init da aplicacao)
         $updated_at = DotEnv::get('UPDATED_AT_FIELD');
-        if (!$updated_at) {
-            throw new Exception('Campo updated_at não configurado no .env');
-        }
 
         // Remove ID da lista de atualização
         $id_value = $vars[$id_field];
@@ -100,7 +93,6 @@ class ActiveRecordsV2
 
         if (empty($set_clauses)) {
             return false;
-            // throw new Exception('Nenhum campo para atualizar!');
         }
 
         $set_sql = implode(', ', $set_clauses);
@@ -163,7 +155,33 @@ class ActiveRecordsV2
         }, $rows);
     }
 
-    public function getBy(array $filters): array
+    /**
+     * Undocumented function
+     *
+     * Exemplos de utilização:
+     * [
+     *     'ano' => ['operator' => '=', 'value' => 2020]
+     * ]
+     *
+     * [
+     *     'nome' => [
+     *         'operator' => 'ILIKE',
+     *         'value'    => '%civic%'
+     *     ]
+     * ]
+     *
+     * [
+     *     'id' => [
+     *         'operator' => 'IN',
+     *         'value'    => [1, 2, 3]
+     *     ]
+     * ]
+     *
+     * // TODO: montar uma função própria minha no futuro
+     * @param array $filters
+     * @return array
+     */
+    public function getBy(stdClass $filters): array
     {
         $table = $this->table_name;
 
@@ -171,20 +189,49 @@ class ActiveRecordsV2
             return [];
         }
 
-        // Lista branca de colunas permitidas
-        // $allowedColumns = $this->allowedColumns ?? array_keys($filters);
+        $allowed_operators = [
+            '=',
+            '!=',
+            '>',
+            '<',
+            '>=',
+            '<=',
+            'LIKE',
+            'ILIKE',
+            'IN'
+        ];
 
         $conditions = [];
         $params     = [];
 
-        foreach ($filters as $column => $value) {
-            // if (!in_array($column, $allowedColumns, true)) {
-            //     throw new Exception("Coluna inválida: {$column}");
-            // }
+        foreach ($filters as $column => $config) {
+
+            $operator = strtoupper($config['operator'] ?? '=');
+            $value    = $config->value ?? null;
+
+            if (!in_array($operator, $allowed_operators)) {
+                throw new \InvalidArgumentException("Operador inválido: {$operator}");
+            }
+
+            // IN precisa ser tratado diferente
+            if ($operator === 'IN' && is_array($value)) {
+
+                $in_params = [];
+
+                foreach ($value as $index => $val) {
+                    $param = ":{$column}_{$index}";
+                    $in_params[] = $param;
+                    $params[$param] = $val;
+                }
+
+                $conditions[] = "{$column} IN (" . implode(',', $in_params) . ")";
+                continue;
+            }
 
             $param = ':' . $column;
-
-            $conditions[] = "{$column} = {$param}";
+            $conditions[] = "{$column} {$operator} {$param}";
+            var_dump($conditions);
+            die;
             $params[$param] = $value;
         }
 
@@ -246,12 +293,7 @@ class ActiveRecordsV2
 
         $row = $stmt->fetch(\PDO::FETCH_OBJ);
 
-        // Acho que nao (e) muito certo ficar aqui
-        if (!$row) {
-            throw new Exception('Registro nao encontrado!', 404);
-        }
-
-        return $this->hydrate($row);
+        return ($row != false) ? $this->hydrate($row) : null;
     }
 
     /**
@@ -269,13 +311,14 @@ class ActiveRecordsV2
         $table = $this->table_name; // Nome da tabela definido na classe
 
         $deleted_at = DotEnv::get('DELETED_AT_FIELD');
-        if (!$deleted_at) {
-            throw new Exception('Campo deleted_at não configurado no .env');
-        }
 
-        $sql = "UPDATE $table SET $deleted_at = CURRENT_TIMESTAMP WHERE :$column = {$object->$column};";
+        // Assim previne SQL injection
+        $sql = "UPDATE {$table}
+                    SET {$deleted_at} = CURRENT_TIMESTAMP
+                WHERE {$column} = :value";
+
         $stmt = $this->connect->getConnect()->prepare($sql);
-        $stmt->bindValue(":$column", $object->$column);
+        $stmt->bindValue(':value', $object->$column);
 
         return $stmt->execute();
     }
