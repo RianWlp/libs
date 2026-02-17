@@ -39,6 +39,11 @@ class DbConnectSingleton
      */
     public function getConnect(): \PDO
     {
+        // Tá bosta, eu sei
+        if (self::$connect->inTransaction()) {
+            return self::$connect;
+        }
+
         if (!isset(self::$connect)) {
             throw new \Exception('A conexão ainda não foi inicializada!');
         }

@@ -99,6 +99,7 @@ class Response
             $response['error'] = $data; // detalhes da falha
         }
 
-        return json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 }
