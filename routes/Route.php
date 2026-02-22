@@ -43,6 +43,7 @@ final class Route
 
     public static function resolve($pattern)
     {
+        // var_dump($pattern);die;
         return self::getRouter()->resolve($pattern);
     }
 

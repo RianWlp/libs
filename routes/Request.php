@@ -54,46 +54,31 @@ class Request
 
             // 1. Tenta decodificar como JSON
             $json = json_decode($raw, true);
-
             if (json_last_error() === JSON_ERROR_NONE) {
-                // JSON válido
                 $this->data = array_merge($this->data, $json);
+                self::decodeJsonRecursive();
                 return;
             }
 
             // 2. Se não for JSON, tenta como query-string
             parse_str($raw, $parsed);
-
             if (!empty($parsed)) {
                 $this->data = array_merge($this->data, $parsed);
+                self::decodeJsonRecursive();
                 return;
             }
         }
     }
 
-
-    // protected function setData()
-    // {
-    //     $inputs = file_get_contents('php://input');
-    //     var_dump($inputs);
-    //     var_dump(json_decode($inputs));
-    //     die;
-    //     // if (json_validate(file_get_contents('php://input'))) {
-    //     $this->data = array_merge($this->data, json_decode($inputs, true));
-    //     // }
-
-    //     var_dump($this->data);
-    //     var_dump($inputs);
-    //     switch ($this->method) {
-
-    //         case 'post':
-    //             $this->data = array_merge($this->data, $_POST);
-    //             break;
-    //         case 'get':
-    //             $this->data = array_merge($this->data, $_GET);
-    //             break;
-    //     }
-    // }
+    protected function decodeJsonRecursive()
+    {
+        foreach ($this->data as $key => $data) {
+            $json = json_decode($data);
+            if ($json) {
+                $this->data[$key] = $json;
+            }
+        }
+    }
 
     protected function setFiles()
     {

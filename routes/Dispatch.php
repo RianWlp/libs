@@ -5,6 +5,7 @@ namespace RianWlp\Libs\routes;
 use RianWlp\Db\DbConnect;
 use RianWlp\Libs\log\Log;
 
+// O dispatch é o que executa a requisição (Entidade Request)
 class Dispatch
 {
     // Ta feio

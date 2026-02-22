@@ -71,6 +71,7 @@ class Router
         $route = $this->find($request->method(), $request->uri());
 
         if ($route) {
+
             $params = $route->callback['values'] ? $this->getValues($request->uri(), $route->callback['values']) : $request->getData();
 
             $headers = getallheaders(); // Extrai o token do cabeçalho
